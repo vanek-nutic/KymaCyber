@@ -42,56 +42,57 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     const codeElement = document.querySelector(`[data-code-id="${codeId}"]`);
     const actualCode = codeElement ? codeElement.textContent || code : code;
     
-    // Map language to file extension
-    const extensionMap: Record<string, string> = {
-      html: '.html',
-      htm: '.html',
-      javascript: '.js',
-      js: '.js',
-      typescript: '.ts',
-      ts: '.ts',
-      jsx: '.jsx',
-      tsx: '.tsx',
-      css: '.css',
-      scss: '.scss',
-      sass: '.sass',
-      less: '.less',
-      python: '.py',
-      py: '.py',
-      java: '.java',
-      cpp: '.cpp',
-      c: '.c',
-      csharp: '.cs',
-      cs: '.cs',
-      php: '.php',
-      ruby: '.rb',
-      rb: '.rb',
-      go: '.go',
-      rust: '.rs',
-      rs: '.rs',
-      swift: '.swift',
-      kotlin: '.kt',
-      sql: '.sql',
-      json: '.json',
-      xml: '.xml',
-      yaml: '.yaml',
-      yml: '.yml',
-      markdown: '.md',
-      md: '.md',
-      bash: '.sh',
-      sh: '.sh',
-      shell: '.sh',
-      powershell: '.ps1',
-      dockerfile: '.dockerfile',
-      plaintext: '.txt',
-      text: '.txt',
+    // Map language to file extension and MIME type
+    const fileTypeMap: Record<string, { ext: string; mime: string }> = {
+      html: { ext: '.html', mime: 'text/html' },
+      htm: { ext: '.html', mime: 'text/html' },
+      javascript: { ext: '.js', mime: 'text/javascript' },
+      js: { ext: '.js', mime: 'text/javascript' },
+      typescript: { ext: '.ts', mime: 'text/typescript' },
+      ts: { ext: '.ts', mime: 'text/typescript' },
+      jsx: { ext: '.jsx', mime: 'text/jsx' },
+      tsx: { ext: '.tsx', mime: 'text/tsx' },
+      css: { ext: '.css', mime: 'text/css' },
+      scss: { ext: '.scss', mime: 'text/x-scss' },
+      sass: { ext: '.sass', mime: 'text/x-sass' },
+      less: { ext: '.less', mime: 'text/x-less' },
+      python: { ext: '.py', mime: 'text/x-python' },
+      py: { ext: '.py', mime: 'text/x-python' },
+      java: { ext: '.java', mime: 'text/x-java' },
+      cpp: { ext: '.cpp', mime: 'text/x-c++src' },
+      c: { ext: '.c', mime: 'text/x-csrc' },
+      csharp: { ext: '.cs', mime: 'text/x-csharp' },
+      cs: { ext: '.cs', mime: 'text/x-csharp' },
+      php: { ext: '.php', mime: 'application/x-php' },
+      ruby: { ext: '.rb', mime: 'text/x-ruby' },
+      rb: { ext: '.rb', mime: 'text/x-ruby' },
+      go: { ext: '.go', mime: 'text/x-go' },
+      rust: { ext: '.rs', mime: 'text/x-rust' },
+      rs: { ext: '.rs', mime: 'text/x-rust' },
+      swift: { ext: '.swift', mime: 'text/x-swift' },
+      kotlin: { ext: '.kt', mime: 'text/x-kotlin' },
+      sql: { ext: '.sql', mime: 'application/sql' },
+      json: { ext: '.json', mime: 'application/json' },
+      xml: { ext: '.xml', mime: 'application/xml' },
+      yaml: { ext: '.yaml', mime: 'text/yaml' },
+      yml: { ext: '.yml', mime: 'text/yaml' },
+      markdown: { ext: '.md', mime: 'text/markdown' },
+      md: { ext: '.md', mime: 'text/markdown' },
+      bash: { ext: '.sh', mime: 'application/x-sh' },
+      sh: { ext: '.sh', mime: 'application/x-sh' },
+      shell: { ext: '.sh', mime: 'application/x-sh' },
+      powershell: { ext: '.ps1', mime: 'application/x-powershell' },
+      dockerfile: { ext: '.dockerfile', mime: 'text/plain' },
+      plaintext: { ext: '.txt', mime: 'text/plain' },
+      text: { ext: '.txt', mime: 'text/plain' },
     };
 
-    const extension = extensionMap[language.toLowerCase()] || '.txt';
-    const filename = `code_${Date.now()}${extension}`;
+    const fileType = fileTypeMap[language.toLowerCase()] || { ext: '.txt', mime: 'text/plain' };
+    const filename = `code_${Date.now()}${fileType.ext}`;
 
     try {
-      const blob = new Blob([actualCode], { type: 'text/plain;charset=utf-8' });
+      // Use proper MIME type for better browser handling
+      const blob = new Blob([actualCode], { type: `${fileType.mime};charset=utf-8` });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

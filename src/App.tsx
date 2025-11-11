@@ -14,8 +14,9 @@ import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { RobotSidebar } from './components/RobotSidebar';
 import './components/RobotSidebar.css';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { AIClarificationDialog } from './components/AIClarificationDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
+import { detectGeneratedFiles } from './lib/export-utils';
 import { generateDownloadableFiles, downloadFile, getMimeType, formatFileSize, type DownloadableFile } from './lib/file-download';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -55,6 +56,12 @@ function App() {
 
   // State for confirmation dialogs
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  // State for AI clarification dialog
+  const [clarificationDialog, setClarificationDialog] = useState({
+    isOpen: false,
+    context: ''
+  });
 
   // State for cumulative stats
   const [cumulativeStats, setCumulativeStats] = useState({
@@ -419,6 +426,27 @@ function App() {
     }
   }, [result, query]);
 
+  // Handle AI clarification submission
+  const handleClarificationSubmit = useCallback((input: string) => {
+    // Append clarification to query and restart
+    const clarificationContext = `${query}\n\n[User Clarification]\n${input}`;
+    setQuery(clarificationContext);
+    setClarificationDialog({ isOpen: false, context: '' });
+    
+    // Auto-submit with the clarification
+    setTimeout(() => {
+      const form = document.querySelector('form');
+      if (form) {
+        form.requestSubmit();
+      }
+    }, 100);
+    
+    toast.success('Clarification sent to AI', {
+      duration: 2000,
+      position: 'bottom-right',
+    });
+  }, [query]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onSubmit: () => {
@@ -510,6 +538,15 @@ function App() {
                 title="Clear all fields (Ctrl+K)"
               >
                 🧹 Clear
+              </button>
+              <button
+                type="button"
+                className="ask-ai-button"
+                onClick={() => setClarificationDialog({ isOpen: true, context: result })}
+                disabled={isLoading}
+                title="Ask AI a question or provide clarification"
+              >
+                🤖 Ask AI
               </button>
             </div>
 
@@ -618,69 +655,7 @@ function App() {
               <span className="panel-icon">📄</span>
               Results
             </h2>
-            {result && (
-              <div className="export-buttons">
-                <button
-                  className="export-btn copy-btn"
-                  onClick={() => {
-                    navigator.clipboard.writeText(result);
-                    toast.success('Result copied to clipboard!', {
-                      duration: 2000,
-                      position: 'bottom-right',
-                    });
-                  }}
-                  title="Copy result to clipboard"
-                >
-                  📋 Copy
-                </button>
-                <button
-                  className="export-btn pdf-btn"
-                  onClick={() => {
-                    downloadComprehensivePDF(
-                      query,
-                      _reasoningContent,
-                      toolCalls,
-                      result,
-                      metrics,
-                      generateFilename('kimi-cyber-comprehensive-report', 'pdf')
-                    );
-                    toast.success('Comprehensive PDF report downloaded!', {
-                      duration: 3000,
-                      position: 'bottom-right',
-                    });
-                  }}
-                  title="Download comprehensive PDF report with all research data"
-                >
-                  📥 PDF
-                </button>
-                <button
-                  className="export-btn md-btn"
-                  onClick={() => {
-                    downloadAsMarkdown(result, generateFilename('kimi-cyber-report', 'md'));
-                    toast.success('Markdown file downloaded!', {
-                      duration: 2000,
-                      position: 'bottom-right',
-                    });
-                  }}
-                  title="Download as Markdown file (.md)"
-                >
-                  📝 MD
-                </button>
-                <button
-                  className="export-btn txt-btn"
-                  onClick={() => {
-                    downloadAsText(result, generateFilename('kimi-cyber-report', 'txt'));
-                    toast.success('Text file downloaded!', {
-                      duration: 2000,
-                      position: 'bottom-right',
-                    });
-                  }}
-                  title="Download as plain text file (.txt)"
-                >
-                  📄 TXT
-                </button>
-              </div>
-            )}
+
           </div>
           <div className="panel-content">
             {result ? (
@@ -789,6 +764,15 @@ function App() {
       <MemoryPanel
         isOpen={isMemoryPanelOpen}
         onClose={() => setIsMemoryPanelOpen(false)}
+      />
+
+      {/* AI Clarification Dialog */}
+      <AIClarificationDialog
+        isOpen={clarificationDialog.isOpen}
+        context={clarificationDialog.context}
+        placeholder="Type your response or clarification here..."
+        onSubmit={handleClarificationSubmit}
+        onCancel={() => setClarificationDialog({ isOpen: false, context: '' })}
       />
     </div>
     </div>
