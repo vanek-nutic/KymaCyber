@@ -37,6 +37,83 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     }
   };
 
+  const saveAsFile = (code: string, language: string) => {
+    // Map language to file extension
+    const extensionMap: Record<string, string> = {
+      html: '.html',
+      htm: '.html',
+      javascript: '.js',
+      js: '.js',
+      typescript: '.ts',
+      ts: '.ts',
+      jsx: '.jsx',
+      tsx: '.tsx',
+      css: '.css',
+      scss: '.scss',
+      sass: '.sass',
+      less: '.less',
+      python: '.py',
+      py: '.py',
+      java: '.java',
+      cpp: '.cpp',
+      c: '.c',
+      csharp: '.cs',
+      cs: '.cs',
+      php: '.php',
+      ruby: '.rb',
+      rb: '.rb',
+      go: '.go',
+      rust: '.rs',
+      rs: '.rs',
+      swift: '.swift',
+      kotlin: '.kt',
+      sql: '.sql',
+      json: '.json',
+      xml: '.xml',
+      yaml: '.yaml',
+      yml: '.yml',
+      markdown: '.md',
+      md: '.md',
+      bash: '.sh',
+      sh: '.sh',
+      shell: '.sh',
+      powershell: '.ps1',
+      dockerfile: '.dockerfile',
+      plaintext: '.txt',
+      text: '.txt',
+    };
+
+    const extension = extensionMap[language.toLowerCase()] || '.txt';
+    const filename = `code_${Date.now()}${extension}`;
+
+    try {
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Saved as ${filename}`, {
+        duration: 2000,
+        position: 'bottom-right',
+        style: {
+          background: 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)',
+          color: 'white',
+          fontWeight: '600',
+        },
+      });
+    } catch (err) {
+      toast.error('Failed to save file', {
+        duration: 2000,
+        position: 'bottom-right',
+      });
+    }
+  };
+
   return (
     <div className={`markdown-renderer ${className}`}>
       <ReactMarkdown
@@ -53,13 +130,22 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                 <div className="code-block-wrapper">
                   <div className="code-block-header">
                     <span className="code-language">{match[1]}</span>
-                    <button
-                      className="copy-button"
-                      onClick={() => copyToClipboard(codeString, codeId)}
-                      title="Copy code"
-                    >
-                      {copiedCode === codeId ? '✓ Copied' : '📋 Copy'}
-                    </button>
+                    <div className="code-actions">
+                      <button
+                        className="copy-button"
+                        onClick={() => copyToClipboard(codeString, codeId)}
+                        title="Copy code"
+                      >
+                        {copiedCode === codeId ? '✓ Copied' : '📋 Copy'}
+                      </button>
+                      <button
+                        className="save-button"
+                        onClick={() => saveAsFile(codeString, match[1])}
+                        title="Save as file"
+                      >
+                        💾 Save As
+                      </button>
+                    </div>
                   </div>
                   <pre className={className}>
                     <code className={className} {...props}>

@@ -46,6 +46,9 @@ function App() {
   // State for memory panel
   const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
 
+  // State for conversation history
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+
   // Detect downloadable files after streaming completes
   useEffect(() => {
     if (!isLoading && result) {
@@ -71,7 +74,11 @@ function App() {
     e.preventDefault();
     if (!query.trim() || isLoading) return;
     
-    // Reset state
+    // Save current query to conversation history
+    const currentQuery = query;
+    setConversationHistory(prev => [...prev, { role: 'user', content: currentQuery }]);
+    
+    // Reset state for new response
     setReasoningContent('');
     setToolCalls([]);
     setResult('');
@@ -98,9 +105,21 @@ function App() {
       }));
       console.log('[DEBUG] Files for API:', filesForAPI.length, 'files', filesForAPI.map(f => `${f.name} (${f.content.length} chars)`));
       
+    // Build query with conversation history
+    let queryWithHistory = currentQuery;
+    if (conversationHistory.length > 0) {
+      // Include last 5 exchanges (10 messages) for context
+      const recentHistory = conversationHistory.slice(-10);
+      const historyContext = recentHistory.map(msg => 
+        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+      ).join('\n\n');
+      queryWithHistory = `Previous conversation:\n${historyContext}\n\n---\n\nUser's current message: ${currentQuery}`;
+      console.log('[Conversation] Including', recentHistory.length, 'previous messages for context');
+    }
+      
     try {
       if (useStreaming) {
-        await queryKimiK2Streaming(query, selectedModel, _modelParams, filesForAPI, (update) => {
+        await queryKimiK2Streaming(queryWithHistory, selectedModel, _modelParams, filesForAPI, (update) => {
         // Update reasoning content (thinking models only)
         if (update.reasoningContent) {
           setReasoningContent((prev) => prev + update.reasoningContent);
@@ -152,7 +171,7 @@ function App() {
         });
       } else {
         // Non-streaming mode (fallback)
-        const response = await queryKimiK2(query, filesForAPI, (update) => {
+        const response = await queryKimiK2(queryWithHistory, filesForAPI, (update) => {
           if (update.toolCall) {
             setToolCalls((prev) => {
               const existingIndex = prev.findIndex((tc) => tc.id === update.toolCall!.id);
@@ -199,7 +218,7 @@ function App() {
           let fallbackResult = '';
           
           if (useStreaming) {
-            await queryKimiK2Streaming(query, fallbackModel, _modelParams, filesForAPI, (update) => {
+            await queryKimiK2Streaming(queryWithHistory, fallbackModel, _modelParams, filesForAPI, (update) => {
               if (update.reasoningContent) {
                 setReasoningContent((prev) => prev + update.reasoningContent);
               }
@@ -223,7 +242,7 @@ function App() {
               }
             });
           } else {
-            const response = await queryKimiK2(query, filesForAPI);
+            const response = await queryKimiK2(queryWithHistory, filesForAPI);
             fallbackResult = response;
             setResult((prev) => prev + response);
           }
@@ -263,10 +282,15 @@ function App() {
         }
       }
       
+      // Save assistant response to conversation history
+      if (finalResult) {
+        setConversationHistory(prev => [...prev, { role: 'assistant', content: finalResult }]);
+      }
+      
       // Save to chat history if we have a result
       if (finalResult && chatHistoryRef.current) {
         chatHistoryRef.current.saveMessage({
-          query,
+          query: currentQuery,
           result: finalResult,
           toolCalls: finalToolCallsCount,
           elapsedTime: finalElapsedTime,
@@ -287,6 +311,7 @@ function App() {
     setQuery('');
     setToolCalls([]);
     setResult('');
+    setConversationHistory([]);
     setMetrics({
       thinkingTokens: 0,
       toolCalls: 0,
@@ -294,7 +319,7 @@ function App() {
       inputTokens: 0,
       outputTokens: 0,
     });
-    toast.success('Cleared all fields', {
+    toast.success('Cleared all fields and conversation history', {
       duration: 1500,
       position: 'bottom-right',
     });
