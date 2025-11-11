@@ -122,7 +122,18 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         components={{
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
-            const codeString = String(children).replace(/\n$/, '');
+            // Extract text content properly from children
+            let codeString = '';
+            if (typeof children === 'string') {
+              codeString = children;
+            } else if (Array.isArray(children)) {
+              codeString = children.map(child => 
+                typeof child === 'string' ? child : String(child)
+              ).join('');
+            } else {
+              codeString = String(children);
+            }
+            codeString = codeString.replace(/\n$/, '');
             const codeId = `code-${Math.random().toString(36).substr(2, 9)}`;
 
             if (!inline && match) {
