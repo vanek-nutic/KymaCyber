@@ -76,10 +76,12 @@ function App() {
       // Load files from IndexedDB
       const { loadFiles } = await import('./lib/file-storage');
       const loadedFiles = await loadFiles();
+      console.log('[DEBUG] Loaded files from IndexedDB:', loadedFiles.length, 'files');
       const filesForAPI = loadedFiles.map((f) => ({
         name: f.name,
         content: f.content
       }));
+      console.log('[DEBUG] Files for API:', filesForAPI.length, 'files', filesForAPI.map(f => `${f.name} (${f.content.length} chars)`));
       
       if (useStreaming) {
         await queryKimiK2Streaming(query, selectedModel, _modelParams, filesForAPI, (update) => {
