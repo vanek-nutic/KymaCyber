@@ -28,9 +28,33 @@ export function detectFileMentions(text: string): Array<{ filename: string; desc
     });
   }
   
-  // Pattern 2: exported/saved/created filename.ext
-  const pattern2 = /(exported|saved|created|generated)\s+([a-zA-Z0-9_-]+\.[a-z]+)/gi;
+  // Pattern 2: **File:** `filename.ext` or **File name:** `filename.ext`
+  const pattern2 = /\*\*File(?:\s+name)?:\*\*\s+`([a-zA-Z0-9_-]+\.[a-z]+)`/gi;
   while ((match = pattern2.exec(text)) !== null) {
+    const filename = match[1];
+    if (!mentions.find(m => m.filename === filename)) {
+      mentions.push({
+        filename,
+        description: ''
+      });
+    }
+  }
+  
+  // Pattern 3: File: sales_data.csv (without backticks)
+  const pattern3 = /\*\*File(?:\s+name)?:\*\*\s+([a-zA-Z0-9_-]+\.[a-z]+)/gi;
+  while ((match = pattern3.exec(text)) !== null) {
+    const filename = match[1];
+    if (!mentions.find(m => m.filename === filename)) {
+      mentions.push({
+        filename,
+        description: ''
+      });
+    }
+  }
+  
+  // Pattern 4: exported/saved/created/generated filename.ext
+  const pattern4 = /(exported|saved|created|generated)\s+([a-zA-Z0-9_-]+\.[a-z]+)/gi;
+  while ((match = pattern4.exec(text)) !== null) {
     const filename = match[2];
     if (!mentions.find(m => m.filename === filename)) {
       mentions.push({
