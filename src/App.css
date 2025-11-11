@@ -1,0 +1,406 @@
+/**
+ * Kimi Cyber - App Component Styles
+ */
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--cyber-bg-primary);
+}
+
+/* Header */
+.app-header {
+  background: linear-gradient(135deg, var(--cyber-bg-secondary) 0%, var(--cyber-bg-tertiary) 100%);
+  border-bottom: 2px solid var(--cyber-border);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.logo-icon {
+  font-size: 2.5rem;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.app-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--cyber-accent-primary) 0%, var(--cyber-accent-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-subtitle {
+  color: var(--cyber-text-secondary);
+  font-size: 1rem;
+  margin-left: 4rem;
+}
+
+/* Input Section */
+.input-section {
+  padding: var(--spacing-xl);
+  background: var(--cyber-bg-secondary);
+  border-bottom: 1px solid var(--cyber-border);
+}
+
+.query-form {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.query-input {
+  width: 100%;
+  background: var(--cyber-bg-tertiary);
+  border: 2px solid var(--cyber-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  color: var(--cyber-text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all var(--transition-normal);
+}
+
+.query-input:focus {
+  outline: none;
+  border-color: var(--cyber-accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+}
+
+.query-input::placeholder {
+  color: var(--cyber-text-muted);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.submit-button,
+.clear-button {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.submit-button {
+  background: linear-gradient(135deg, var(--cyber-accent-primary) 0%, var(--cyber-accent-secondary) 100%);
+  color: var(--cyber-bg-primary);
+  flex: 1;
+  justify-content: center;
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clear-button {
+  background: var(--cyber-bg-tertiary);
+  color: var(--cyber-text-primary);
+  border: 1px solid var(--cyber-border);
+}
+
+.clear-button:hover:not(:disabled) {
+  background: var(--cyber-border);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--cyber-bg-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Panels Container */
+.panels-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--cyber-border);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.panel {
+  background: var(--cyber-bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--cyber-border);
+  transition: all var(--transition-normal);
+}
+
+.panel:hover {
+  border-color: var(--cyber-accent-primary);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+}
+
+.panel-header {
+  background: var(--cyber-bg-tertiary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--cyber-border);
+}
+
+.panel-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--cyber-text-primary);
+}
+
+.panel-icon {
+  font-size: 1.25rem;
+}
+
+.panel-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--cyber-text-muted);
+  gap: var(--spacing-sm);
+}
+
+.empty-state p {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.empty-hint {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+/* Metrics Bar */
+.metrics-bar {
+  background: var(--cyber-bg-secondary);
+  border-top: 1px solid var(--cyber-border);
+  padding: var(--spacing-md) var(--spacing-xl);
+  display: flex;
+  gap: var(--spacing-xl);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.metric-label {
+  color: var(--cyber-text-secondary);
+  font-size: 0.875rem;
+}
+
+.metric-value {
+  color: var(--cyber-accent-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: 'Fira Code', monospace;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .panels-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 2rem;
+  }
+  
+  .app-subtitle {
+    margin-left: 0;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .metrics-bar {
+    gap: var(--spacing-md);
+  }
+}
+
+/* Tool Calls Styles */
+.tool-calls-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.tool-call-item {
+  background: var(--cyber-bg-tertiary);
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  animation: slide-in 0.3s ease-out;
+}
+
+.tool-call-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.tool-name {
+  font-weight: 600;
+  color: var(--cyber-accent-primary);
+  font-family: 'Fira Code', monospace;
+}
+
+.tool-status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: var(--cyber-warning);
+  color: var(--cyber-bg-primary);
+}
+
+.status-success {
+  background: var(--cyber-success);
+  color: var(--cyber-bg-primary);
+}
+
+.status-error {
+  background: var(--cyber-error);
+  color: white;
+}
+
+.tool-arguments,
+.tool-result {
+  margin-top: var(--spacing-sm);
+  font-size: 0.875rem;
+}
+
+.tool-arguments strong,
+.tool-result strong {
+  color: var(--cyber-text-secondary);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.tool-arguments pre,
+.tool-result pre {
+  background: var(--cyber-bg-primary);
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  overflow-x: auto;
+  color: var(--cyber-text-primary);
+  font-size: 0.8125rem;
+}
+
+/* Thinking Content */
+.thinking-content {
+  animation: fade-in 0.3s ease-out;
+}
+
+.thinking-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--cyber-text-primary);
+  line-height: 1.6;
+}
+
+/* Result Content */
+.result-content {
+  animation: fade-in 0.3s ease-out;
+}
+
+.markdown-content {
+  color: var(--cyber-text-primary);
+  line-height: 1.8;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  color: var(--cyber-accent-primary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.markdown-content p {
+  margin-bottom: var(--spacing-md);
+}
+
+.markdown-content code {
+  background: var(--cyber-bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-content pre {
+  background: var(--cyber-bg-tertiary);
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  overflow-x: auto;
+  margin: var(--spacing-md) 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+}
+
+.markdown-content li {
+  margin-bottom: var(--spacing-sm);
+}

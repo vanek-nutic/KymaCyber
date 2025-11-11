@@ -1,0 +1,152 @@
+/**
+ * Kimi Cyber - Global Styles
+ * Cyber-themed dark interface with neon accents
+ */
+
+:root {
+  /* Cyber Color Palette */
+  --cyber-bg-primary: #0a0e27;
+  --cyber-bg-secondary: #131829;
+  --cyber-bg-tertiary: #1a1f3a;
+  
+  --cyber-accent-primary: #00ff88;
+  --cyber-accent-secondary: #00d4ff;
+  --cyber-accent-tertiary: #ff00ff;
+  
+  --cyber-text-primary: #e0e6ed;
+  --cyber-text-secondary: #a0a8b5;
+  --cyber-text-muted: #6b7280;
+  
+  --cyber-border: #2a3142;
+  --cyber-border-glow: rgba(0, 255, 136, 0.3);
+  
+  --cyber-success: #00ff88;
+  --cyber-error: #ff3366;
+  --cyber-warning: #ffaa00;
+  --cyber-info: #00d4ff;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--cyber-bg-primary);
+  color: var(--cyber-text-primary);
+  line-height: 1.6;
+}
+
+code {
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cyber-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cyber-border);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyber-accent-primary);
+}
+
+/* Selection */
+::selection {
+  background: var(--cyber-accent-primary);
+  color: var(--cyber-bg-primary);
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid var(--cyber-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--cyber-accent-primary);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--cyber-accent-primary);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Utility Classes */
+.cyber-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.cyber-border-glow {
+  border: 1px solid var(--cyber-border-glow);
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
