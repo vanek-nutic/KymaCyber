@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import './styles/globals.css';
 import './App.css';
 import { queryKimiK2 } from './lib/api';
 import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
 import { FileUpload, type UploadedFile } from './components/FileUpload';
+import { ChatHistory, type ChatMessage, type ChatHistoryHandle } from './components/ChatHistory';
 
 function App() {
+  const chatHistoryRef = useRef<ChatHistoryHandle>(null);
   const [query, setQuery] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +46,8 @@ function App() {
     
     setIsLoading(true);
     const startTime = Date.now();
+    let finalResult = '';
+    let finalToolCallsCount = 0;
 
     try {
       const apiFunction = useStreaming ? queryKimiK2Streaming : queryKimiK2;
@@ -70,6 +74,7 @@ function App() {
           });
 
           // Update tool calls count
+          finalToolCallsCount++;
           setMetrics((prev) => ({
             ...prev,
             toolCalls: prev.toolCalls + 1,
@@ -78,6 +83,7 @@ function App() {
 
         // Update content
         if (update.content) {
+          finalResult += update.content;
           setResult((prev) => prev + update.content);
         }
 
@@ -100,11 +106,26 @@ function App() {
       setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
+      const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000);
       setMetrics((prev) => ({
         ...prev,
-        elapsedTime: Math.floor((Date.now() - startTime) / 1000),
+        elapsedTime: finalElapsedTime,
       }));
+      
+      // Save to chat history if we have a result
+      if (finalResult && chatHistoryRef.current) {
+        chatHistoryRef.current.saveMessage({
+          query,
+          result: finalResult,
+          toolCalls: finalToolCallsCount,
+          elapsedTime: finalElapsedTime,
+        });
+      }
     }
+  };
+
+  const handleLoadQuery = (loadedQuery: string) => {
+    setQuery(loadedQuery);
   };
 
   const handleClear = () => {
@@ -186,6 +207,7 @@ function App() {
             >
               {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
             </button>
+            <ChatHistory ref={chatHistoryRef} onLoadQuery={handleLoadQuery} />
           </div>
           
           {/* File Upload */}
