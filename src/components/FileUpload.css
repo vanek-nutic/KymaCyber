@@ -223,3 +223,80 @@
   transform: none;
   box-shadow: none;
 }
+
+/* Upload Success Message */
+.upload-success {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 200, 100, 0.1) 100%);
+  border: 2px solid #00ff88;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.upload-success .success-header {
+  margin-bottom: 1rem;
+}
+
+.upload-success .success-header p {
+  color: #00ff88;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.upload-success .next-steps {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.upload-success .next-steps h4 {
+  color: #00ff88;
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+}
+
+.upload-success .next-steps ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.upload-success .next-steps li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.upload-success .next-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.upload-success .dismiss-btn {
+  background: #00ff88;
+  border: none;
+  color: #1a1a2e;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-success .dismiss-btn:hover {
+  background: #00dd77;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);
+}

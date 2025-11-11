@@ -89,8 +89,50 @@
 
 .form-actions {
   display: flex;
-  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
   margin-top: var(--spacing-md);
+  align-items: center;
+}
+
+/* Button Groups */
+.button-group {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.button-group.primary-actions {
+  padding-right: var(--spacing-md);
+  border-right: 2px solid rgba(0, 255, 136, 0.2);
+}
+
+.button-group.secondary-actions {
+  padding-right: var(--spacing-md);
+  border-right: 2px solid rgba(0, 255, 136, 0.2);
+}
+
+.button-group.settings-actions {
+  margin-left: auto;
+}
+
+/* Responsive: Stack button groups on small screens */
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .button-group {
+    width: 100%;
+    justify-content: center;
+    border-right: none !important;
+    padding-right: 0 !important;
+  }
+  
+  .button-group.settings-actions {
+    margin-left: 0;
+  }
 }
 
 .submit-button,
@@ -236,12 +278,59 @@
 /* Metrics Bar */
 .metrics-bar {
   background: var(--cyber-bg-secondary);
-  border-top: 1px solid var(--cyber-border);
-  padding: var(--spacing-md) var(--spacing-xl);
+  border-top: 2px solid var(--cyber-border);
+  padding: var(--spacing-lg) var(--spacing-xl);
   display: flex;
   gap: var(--spacing-xl);
-  justify-content: center;
+  justify-content: space-around;
   flex-wrap: wrap;
+  animation: slideUp 0.4s ease;
+  transition: all 0.3s ease;
+}
+
+.metrics-bar.active {
+  border-top-color: var(--cyber-accent-primary);
+  box-shadow: 0 -4px 12px rgba(0, 255, 136, 0.2);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metrics-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 200px;
+}
+
+.metrics-section .section-title {
+  color: var(--cyber-accent-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+  padding-bottom: var(--spacing-xs);
+}
+
+.metrics-row {
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.metrics-section.cumulative-stats {
+  border-left: 2px solid rgba(0, 255, 136, 0.3);
+  padding-left: var(--spacing-lg);
 }
 
 .metric {

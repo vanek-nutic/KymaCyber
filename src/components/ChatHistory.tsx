@@ -1,5 +1,6 @@
 import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import './ChatHistory.css';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export interface ChatMessage {
   id: string;
@@ -12,6 +13,7 @@ export interface ChatMessage {
 
 interface ChatHistoryProps {
   onLoadQuery: (query: string) => void;
+  onRestoreConversation?: (message: ChatMessage) => void;
 }
 
 export interface ChatHistoryHandle {
@@ -19,10 +21,16 @@ export interface ChatHistoryHandle {
 }
 
 export const ChatHistory = forwardRef<ChatHistoryHandle, ChatHistoryProps>(
-  ({ onLoadQuery }, ref) => {
+  ({ onLoadQuery, onRestoreConversation }, ref) => {
     const [history, setHistory] = useState<ChatMessage[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [confirmDialog, setConfirmDialog] = useState<{
+      isOpen: boolean;
+      title: string;
+      message: string;
+      onConfirm: () => void;
+    }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
     // Load history from localStorage on mount
     useEffect(() => {
@@ -56,17 +64,29 @@ export const ChatHistory = forwardRef<ChatHistoryHandle, ChatHistoryProps>(
 
     // Clear all history
     const clearHistory = () => {
-      if (window.confirm('Are you sure you want to clear all chat history?')) {
-        setHistory([]);
-        localStorage.removeItem('kimi_cyber_history');
-      }
+      setConfirmDialog({
+        isOpen: true,
+        title: '🗑️ Clear All History',
+        message: 'Are you sure you want to clear all chat history? This action cannot be undone.',
+        onConfirm: () => {
+          setHistory([]);
+          localStorage.removeItem('kimi_cyber_history');
+        },
+      });
     };
 
     // Delete a single message
     const deleteMessage = (id: string) => {
-      const updatedHistory = history.filter((msg) => msg.id !== id);
-      setHistory(updatedHistory);
-      localStorage.setItem('kimi_cyber_history', JSON.stringify(updatedHistory));
+      setConfirmDialog({
+        isOpen: true,
+        title: '🗑️ Delete Message',
+        message: 'Are you sure you want to delete this message from history?',
+        onConfirm: () => {
+          const updatedHistory = history.filter((msg) => msg.id !== id);
+          setHistory(updatedHistory);
+          localStorage.setItem('kimi_cyber_history', JSON.stringify(updatedHistory));
+        },
+      });
     };
 
     // Export history as JSON
@@ -104,6 +124,17 @@ export const ChatHistory = forwardRef<ChatHistoryHandle, ChatHistoryProps>(
 
     return (
       <>
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+          danger={true}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+        
         <button
           className="history-toggle"
           onClick={() => setIsOpen(!isOpen)}
@@ -149,22 +180,36 @@ export const ChatHistory = forwardRef<ChatHistoryHandle, ChatHistoryProps>(
                   </div>
                 ) : (
                   filteredHistory.map((msg) => (
-                    <div key={msg.id} className="history-item">
+                    <div 
+                      key={msg.id} 
+                      className="history-item clickable"
+                      onClick={() => {
+                        if (onRestoreConversation) {
+                          onRestoreConversation(msg);
+                          setIsOpen(false);
+                        }
+                      }}
+                      title="Click to restore this conversation"
+                    >
                       <div className="history-item-header">
                         <span className="history-time">{formatTime(msg.timestamp)}</span>
                         <div className="history-item-actions">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               onLoadQuery(msg.query);
                               setIsOpen(false);
                             }}
                             className="load-btn"
-                            title="Load this query"
+                            title="Load query only"
                           >
-                            🔄
+                            📝
                           </button>
                           <button
-                            onClick={() => deleteMessage(msg.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteMessage(msg.id);
+                            }}
                             className="delete-btn"
                             title="Delete this message"
                           >

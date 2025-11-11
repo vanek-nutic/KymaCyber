@@ -11,7 +11,9 @@ import { ModelSelector } from './components/ModelSelector';
 import { ReasoningPanel } from './components/ReasoningPanel';
 import { MemoryPanel } from './components/MemoryPanel';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
-import { SplineDemo } from './components/SplineDemo';
+import { RobotSidebar } from './components/RobotSidebar';
+import './components/RobotSidebar.css';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
 import { generateDownloadableFiles, downloadFile, getMimeType, formatFileSize, type DownloadableFile } from './lib/file-download';
@@ -50,6 +52,16 @@ function App() {
 
   // State for conversation history
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+
+  // State for confirmation dialogs
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  // State for cumulative stats
+  const [cumulativeStats, setCumulativeStats] = useState({
+    totalQueries: 0,
+    totalToolCalls: 0,
+    totalTime: 0,
+  });
 
   // Detect downloadable files after streaming completes
   useEffect(() => {
@@ -257,8 +269,58 @@ function App() {
           setResult(`Error: Both K2 Thinking and K2 Thinking Turbo are currently unavailable.\n\n${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}\n\nPlease try again in a few minutes.`);
         }
       } else {
-        // Normal error handling
-        setResult(`Error: ${errorMessage}`);
+        // Enhanced error handling with user-friendly messages
+        let userFriendlyMessage = errorMessage;
+        
+        // Network errors
+        if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to fetch')) {
+          userFriendlyMessage = '🚫 Network Error: Unable to connect to the AI service. Please check your internet connection and try again.';
+          toast.error('Network connection failed', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        // Rate limit errors
+        else if (errorMessage.includes('rate_limit') || errorMessage.includes('429')) {
+          userFriendlyMessage = '⏱️ Rate Limit: Too many requests. Please wait a moment and try again.';
+          toast.error('Rate limit exceeded', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        // Authentication errors
+        else if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
+          userFriendlyMessage = '🔒 Authentication Error: API key issue. Please contact support.';
+          toast.error('Authentication failed', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        // Timeout errors
+        else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          userFriendlyMessage = '⏰ Timeout Error: The request took too long. Please try again with a simpler query.';
+          toast.error('Request timed out', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        // Server errors
+        else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
+          userFriendlyMessage = '🔧 Server Error: The AI service is temporarily unavailable. Please try again in a few minutes.';
+          toast.error('Server error', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        // Generic error with retry suggestion
+        else {
+          toast.error('Query failed', {
+            duration: 4000,
+            position: 'bottom-right',
+          });
+        }
+        
+        setResult(`❌ **Error**\n\n${userFriendlyMessage}\n\n**What you can try:**\n- Check your internet connection\n- Try a simpler query\n- Wait a moment and retry\n- Contact support if the issue persists\n\n*Technical details: ${errorMessage}*`);
       }
     } finally {
       setIsLoading(false);
@@ -289,8 +351,8 @@ function App() {
         setConversationHistory(prev => [...prev, { role: 'assistant', content: finalResult }]);
       }
       
-      // Save to chat history if we have a result
-      if (finalResult && chatHistoryRef.current) {
+      // Save to chat history if we      // Save to chat history
+      if (chatHistoryRef.current) {
         chatHistoryRef.current.saveMessage({
           query: currentQuery,
           result: finalResult,
@@ -298,6 +360,13 @@ function App() {
           elapsedTime: finalElapsedTime,
         });
       }
+
+      // Update cumulative stats
+      setCumulativeStats(prev => ({
+        totalQueries: prev.totalQueries + 1,
+        totalToolCalls: prev.totalToolCalls + finalToolCallsCount,
+        totalTime: prev.totalTime + finalElapsedTime,
+      }));
     }
   };
 
@@ -309,11 +378,27 @@ function App() {
     });
   };
 
-  const handleClear = useCallback(() => {
+  const handleRestoreConversation = (message: any) => {
+    setQuery(message.query);
+    setResult(message.result);
+    setMetrics({
+      thinkingTokens: 0,
+      toolCalls: message.toolCalls || 0,
+      elapsedTime: message.elapsedTime || 0,
+      inputTokens: 0,
+      outputTokens: 0,
+    });
+    toast.success('Conversation restored!', {
+      duration: 2000,
+      position: 'bottom-right',
+      icon: '🔄',
+    });
+  };
+
+  const handleClearConfirmed = useCallback(() => {
     setQuery('');
     setToolCalls([]);
     setResult('');
-    setConversationHistory([]);
     setMetrics({
       thinkingTokens: 0,
       toolCalls: 0,
@@ -321,11 +406,18 @@ function App() {
       inputTokens: 0,
       outputTokens: 0,
     });
-    toast.success('Cleared all fields and conversation history', {
+    setConversationHistory([]);
+    toast.success('Cleared!', {
       duration: 1500,
       position: 'bottom-right',
     });
   }, []);
+
+  const handleClear = useCallback(() => {
+    if (result || query) {
+      setShowClearConfirm(true);
+    }
+  }, [result, query]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -342,7 +434,25 @@ function App() {
   });
 
   return (
-    <div className="app-container">
+    <>
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showClearConfirm}
+        title="🧹 Clear All"
+        message="Are you sure you want to clear the query, results, and conversation history?"
+        onConfirm={handleClearConfirmed}
+        onCancel={() => setShowClearConfirm(false)}
+        danger={true}
+        confirmText="Clear All"
+        cancelText="Cancel"
+      />
+
+      {/* Robot Sidebar - Fixed on right */}
+      <RobotSidebar />
+      
+      {/* Main Content Area */}
+      <div className="main-content-area">
+      <div className="app-container">
       {/* Header */}
       <header className="app-header">
         <div className="header-content">
@@ -355,11 +465,6 @@ function App() {
           </p>
         </div>
       </header>
-
-      {/* Spline 3D Demo Section */}
-      <section className="spline-section" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <SplineDemo />
-      </section>
 
       {/* Input Section */}
       <section className="input-section">
@@ -377,48 +482,65 @@ function App() {
             }}
           />
           <div className="form-actions">
-            <button
-              type="submit"
-              className="submit-button"
-              disabled={isLoading || !query.trim()}
-            >
-              {isLoading ? (
-                <>
-                  <span className="spinner"></span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <span>🚀</span>
-                  Submit Query
-                </>
-              )}
-            </button>
-            <button
-              type="button"
-              className="clear-button"
-              onClick={handleClear}
-              disabled={isLoading}
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              className={`toggle-button ${useStreaming ? 'active' : ''}`}
-              onClick={() => setUseStreaming(!useStreaming)}
-              disabled={isLoading}
-              title={useStreaming ? 'Streaming: ON' : 'Streaming: OFF'}
-            >
-              {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
-            </button>
-            <ChatHistory ref={chatHistoryRef} onLoadQuery={handleLoadQuery} />
-            <button
-              className="memory-button"
-              onClick={() => setIsMemoryPanelOpen(true)}
-              title="Open Memory Storage"
-            >
-              💾 Memory
-            </button>
+            {/* Primary Actions Group */}
+            <div className="button-group primary-actions">
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={isLoading || !query.trim()}
+                title="Submit query (Ctrl+Enter)"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <span>🚀</span>
+                    Submit Query
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                className="clear-button"
+                onClick={handleClear}
+                disabled={isLoading}
+                title="Clear all fields (Ctrl+K)"
+              >
+                🧹 Clear
+              </button>
+            </div>
+
+            {/* Secondary Actions Group */}
+            <div className="button-group secondary-actions">
+              <ChatHistory 
+                ref={chatHistoryRef} 
+                onLoadQuery={handleLoadQuery}
+                onRestoreConversation={handleRestoreConversation}
+              />
+              <button
+                className="memory-button"
+                onClick={() => setIsMemoryPanelOpen(true)}
+                title="Open Memory Storage"
+              >
+                💾 Memory
+              </button>
+            </div>
+
+            {/* Settings Group */}
+            <div className="button-group settings-actions">
+              <button
+                type="button"
+                className={`toggle-button ${useStreaming ? 'active' : ''}`}
+                onClick={() => setUseStreaming(!useStreaming)}
+                disabled={isLoading}
+                title={useStreaming ? 'Streaming: ON (faster responses)' : 'Streaming: OFF'}
+              >
+                {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
+              </button>
+            </div>
           </div>
           
           {/* Model Selection */}
@@ -507,7 +629,7 @@ function App() {
                       position: 'bottom-right',
                     });
                   }}
-                  title="Copy to clipboard"
+                  title="Copy result to clipboard"
                 >
                   📋 Copy
                 </button>
@@ -535,12 +657,12 @@ function App() {
                   className="export-btn md-btn"
                   onClick={() => {
                     downloadAsMarkdown(result, generateFilename('kimi-cyber-report', 'md'));
-                    toast.success('Markdown downloaded!', {
+                    toast.success('Markdown file downloaded!', {
                       duration: 2000,
                       position: 'bottom-right',
                     });
                   }}
-                  title="Download as Markdown"
+                  title="Download as Markdown file (.md)"
                 >
                   📝 MD
                 </button>
@@ -553,7 +675,7 @@ function App() {
                       position: 'bottom-right',
                     });
                   }}
-                  title="Download as Text"
+                  title="Download as plain text file (.txt)"
                 >
                   📄 TXT
                 </button>
@@ -609,29 +731,56 @@ function App() {
         </div>
       </main>
 
-      {/* Metrics Bar */}
-      <footer className="metrics-bar">
-        <div className="metric">
-          <span className="metric-label">Thinking Tokens:</span>
-          <span className="metric-value">{metrics.thinkingTokens}</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Tool Calls:</span>
-          <span className="metric-value">{metrics.toolCalls}</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Elapsed Time:</span>
-          <span className="metric-value">{metrics.elapsedTime}s</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Input Tokens:</span>
-          <span className="metric-value">{metrics.inputTokens}</span>
-        </div>
-        <div className="metric">
-          <span className="metric-label">Output Tokens:</span>
-          <span className="metric-value">{metrics.outputTokens}</span>
-        </div>
-      </footer>
+      {/* Metrics Bar - Only show when there's activity */}
+      {(isLoading || result) && (
+        <footer className={`metrics-bar ${isLoading ? 'active' : ''}`}>
+          <div className="metrics-section current-query">
+            <h4 className="section-title">🔍 Current Query</h4>
+            <div className="metrics-row">
+              <div className="metric" title="Reasoning tokens used by thinking models">
+                <span className="metric-label">Thinking:</span>
+                <span className="metric-value">{metrics.thinkingTokens}</span>
+              </div>
+              <div className="metric" title="Number of tools called">
+                <span className="metric-label">Tools:</span>
+                <span className="metric-value">{metrics.toolCalls}</span>
+              </div>
+              <div className="metric" title="Time elapsed for current query">
+                <span className="metric-label">Time:</span>
+                <span className="metric-value">{metrics.elapsedTime}s</span>
+              </div>
+              <div className="metric" title="Input tokens sent to AI">
+                <span className="metric-label">Input:</span>
+                <span className="metric-value">{metrics.inputTokens}</span>
+              </div>
+              <div className="metric" title="Output tokens received from AI">
+                <span className="metric-label">Output:</span>
+                <span className="metric-value">{metrics.outputTokens}</span>
+              </div>
+            </div>
+          </div>
+          
+          {cumulativeStats.totalQueries > 0 && (
+            <div className="metrics-section cumulative-stats">
+              <h4 className="section-title">📊 Session Stats</h4>
+              <div className="metrics-row">
+                <div className="metric" title="Total queries in this session">
+                  <span className="metric-label">Queries:</span>
+                  <span className="metric-value">{cumulativeStats.totalQueries}</span>
+                </div>
+                <div className="metric" title="Total tool calls in this session">
+                  <span className="metric-label">Total Tools:</span>
+                  <span className="metric-value">{cumulativeStats.totalToolCalls}</span>
+                </div>
+                <div className="metric" title="Total time spent in this session">
+                  <span className="metric-label">Total Time:</span>
+                  <span className="metric-value">{Math.floor(cumulativeStats.totalTime / 60)}m {cumulativeStats.totalTime % 60}s</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </footer>
+      )}
 
       {/* Toast Notifications */}
       <Toaster />
@@ -642,6 +791,8 @@ function App() {
         onClose={() => setIsMemoryPanelOpen(false)}
       />
     </div>
+    </div>
+    </>
   );
 }
 

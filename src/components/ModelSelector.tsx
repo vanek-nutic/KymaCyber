@@ -59,7 +59,10 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
         <span className="model-icon">{selectedModelInfo.icon}</span>
         <span className="model-name">{selectedModelInfo.name}</span>
         {selectedModelInfo.badge && (
-          <span className={`model-badge badge-${selectedModelInfo.badge.toLowerCase()}`}>
+          <span 
+            className={`model-badge badge-${selectedModelInfo.badge.toLowerCase()}`}
+            title={selectedModelInfo.badge === 'FAST' ? '60-100 tokens/s' : selectedModelInfo.badge === 'REASONING' ? 'Shows thought process' : 'Fast reasoning with thought process'}
+          >
             {selectedModelInfo.badge}
           </span>
         )}
@@ -82,7 +85,10 @@ export function ModelSelector({ selectedModel, onModelChange }: ModelSelectorPro
                 <span className="model-icon">{model.icon}</span>
                 <span className="model-name">{model.name}</span>
                 {model.badge && (
-                  <span className={`model-badge badge-${model.badge.toLowerCase()}`}>
+                  <span 
+                    className={`model-badge badge-${model.badge.toLowerCase()}`}
+                    title={model.badge === 'FAST' ? '60-100 tokens/s' : model.badge === 'REASONING' ? 'Shows thought process' : 'Fast reasoning with thought process'}
+                  >
                     {model.badge}
                   </span>
                 )}

@@ -28,6 +28,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
   const [showFiles, setShowFiles] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [justUploadedCount, setJustUploadedCount] = useState(0);
   const [quotaInfo, setQuotaInfo] = useState<{ used: number; total: number; percentage: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -155,6 +157,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
 
         // Update quota info
         await updateQuotaInfo();
+
+        // Show success message
+        setUploadSuccess(true);
+        setJustUploadedCount(newFiles.length);
+        setTimeout(() => {
+          setUploadSuccess(false);
+          setJustUploadedCount(0);
+        }, 8000); // Show for 8 seconds
       }
     } catch (error: any) {
       console.error('File upload error:', error);
@@ -246,6 +256,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
           <p>❌ {uploadError}</p>
           <button onClick={() => setUploadError(null)} className="dismiss-btn">
             Dismiss
+          </button>
+        </div>
+      )}
+
+      {uploadSuccess && (
+        <div className="upload-success">
+          <div className="success-header">
+            <p>✅ Successfully uploaded {justUploadedCount} file{justUploadedCount > 1 ? 's' : ''}!</p>
+          </div>
+          <div className="next-steps">
+            <h4>📋 Next Steps:</h4>
+            <ol>
+              <li>Your file{justUploadedCount > 1 ? 's are' : ' is'} now available in "My Files"</li>
+              <li>Enter your query in the text area above</li>
+              <li>The AI will automatically analyze your uploaded file{justUploadedCount > 1 ? 's' : ''}</li>
+              <li>Click "Submit Query" to get insights</li>
+            </ol>
+          </div>
+          <button onClick={() => setUploadSuccess(false)} className="dismiss-btn">
+            Got it!
           </button>
         </div>
       )}

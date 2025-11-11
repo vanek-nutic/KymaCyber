@@ -1,0 +1,54 @@
+/* Robot Sidebar - Fixed on right side */
+.robot-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 30%;
+  min-width: 350px;
+  max-width: 500px;
+  height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+  border-left: 1px solid rgba(0, 255, 0, 0.1);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.robot-scene {
+  width: 100%;
+  height: 100%;
+}
+
+/* Adjust main app container to make room for sidebar */
+.app-layout-with-sidebar {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content-area {
+  flex: 1;
+  margin-right: 30%;
+  min-width: 0; /* Prevents flex item from overflowing */
+}
+
+/* Responsive: Hide robot on small screens */
+@media (max-width: 1024px) {
+  .robot-sidebar {
+    display: none;
+  }
+  
+  .main-content-area {
+    margin-right: 0;
+  }
+}
+
+/* Medium screens: Smaller robot sidebar */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  .robot-sidebar {
+    width: 25%;
+    min-width: 300px;
+  }
+  
+  .main-content-area {
+    margin-right: 25%;
+  }
+}
