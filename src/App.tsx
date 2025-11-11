@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import './styles/globals.css';
 import './App.css';
 import { queryKimiK2 } from './lib/api';
@@ -6,6 +6,9 @@ import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
 import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatMessage, type ChatHistoryHandle } from './components/ChatHistory';
+import { MarkdownRenderer } from './components/MarkdownRenderer';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
   const chatHistoryRef = useRef<ChatHistoryHandle>(null);
@@ -126,9 +129,13 @@ function App() {
 
   const handleLoadQuery = (loadedQuery: string) => {
     setQuery(loadedQuery);
+    toast.success('Query loaded from history', {
+      duration: 2000,
+      position: 'bottom-right',
+    });
   };
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setQuery('');
     setThinking('');
     setToolCalls([]);
@@ -140,7 +147,25 @@ function App() {
       inputTokens: 0,
       outputTokens: 0,
     });
-  };
+    toast.success('Cleared all fields', {
+      duration: 1500,
+      position: 'bottom-right',
+    });
+  }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSubmit: () => {
+      if (query.trim() && !isLoading) {
+        handleSubmit(new Event('submit') as any);
+      }
+    },
+    onClear: handleClear,
+    onEscape: () => {
+      // Blur active element
+      (document.activeElement as HTMLElement)?.blur();
+    },
+  });
 
   return (
     <div className="app-container">
@@ -164,7 +189,7 @@ function App() {
             className="query-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your research query... (Ctrl+Enter to submit)"
+            placeholder="Enter your research query...\n\nKeyboard Shortcuts:\n• Ctrl+Enter: Submit query\n• Ctrl+K: Clear all\n• Esc: Close modals"
             rows={4}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -293,11 +318,26 @@ function App() {
               <span className="panel-icon">📄</span>
               Results
             </h2>
+            {result && (
+              <button
+                className="copy-result-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(result);
+                  toast.success('Result copied to clipboard!', {
+                    duration: 2000,
+                    position: 'bottom-right',
+                  });
+                }}
+                title="Copy result"
+              >
+                📋 Copy
+              </button>
+            )}
           </div>
           <div className="panel-content">
             {result ? (
               <div className="result-content">
-                <div className="markdown-content">{result}</div>
+                <MarkdownRenderer content={result} />
               </div>
             ) : (
               <div className="empty-state">
@@ -334,6 +374,9 @@ function App() {
           <span className="metric-value">{metrics.outputTokens}</span>
         </div>
       </footer>
+
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }
