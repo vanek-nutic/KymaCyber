@@ -73,8 +73,15 @@ function App() {
     let finalToolCallsCount = 0;
 
     try {
+      // Load files from localStorage
+      const savedFiles = localStorage.getItem('kimi-cyber-files');
+      const filesForAPI = savedFiles ? JSON.parse(savedFiles).map((f: any) => ({
+        name: f.name,
+        content: f.content
+      })) : [];
+      
       if (useStreaming) {
-        await queryKimiK2Streaming(query, selectedModel, _modelParams, (update) => {
+        await queryKimiK2Streaming(query, selectedModel, _modelParams, filesForAPI, (update) => {
         // Update reasoning content (thinking models only)
         if (update.reasoningContent) {
           setReasoningContent((prev) => prev + update.reasoningContent);
@@ -126,7 +133,7 @@ function App() {
         });
       } else {
         // Non-streaming mode (fallback)
-        const response = await queryKimiK2(query, (update) => {
+        const response = await queryKimiK2(query, filesForAPI, (update) => {
           if (update.toolCall) {
             setToolCalls((prev) => {
               const existingIndex = prev.findIndex((tc) => tc.id === update.toolCall!.id);

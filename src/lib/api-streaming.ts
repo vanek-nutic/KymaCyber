@@ -59,6 +59,7 @@ export async function queryKimiK2Streaming(
   query: string,
   model: string,
   params: { temperature: number; max_tokens: number },
+  files: { name: string; content: string }[] = [],
   onProgress: (update: {
     thinking?: string;
     reasoningContent?: string;
@@ -77,11 +78,21 @@ export async function queryKimiK2Streaming(
     const tools = getAllToolDefinitions();
     console.log(`[Multi-Tool] Using ${tools.length} tools:`, tools.map(t => t.function.name));
     
-    // Step 2: Create messages array
+    // Step 2: Create messages array with file attachments
+    let userContent = query;
+    
+    // If files are provided, include their content
+    if (files && files.length > 0) {
+      userContent += '\n\n---\n**Attached Files:**\n';
+      files.forEach((file, index) => {
+        userContent += `\n### File ${index + 1}: ${file.name}\n\`\`\`\n${file.content}\n\`\`\`\n`;
+      });
+    }
+    
     const messages: Message[] = [
       {
         role: 'user',
-        content: query,
+        content: userContent,
       },
     ];
 

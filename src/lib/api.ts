@@ -89,6 +89,7 @@ async function executeWebSearch(query: string): Promise<string> {
  */
 export async function queryKimiK2(
   query: string,
+  files: { name: string; content: string }[] = [],
   onProgress?: (update: {
     thinking?: string;
     toolCall?: ToolCall;
@@ -105,11 +106,21 @@ export async function queryKimiK2(
     // Step 1: Define tools
     const tools = [getWebSearchToolDefinition()];
     
-    // Step 2: Create messages array
+    // Step 2: Create messages array with file attachments
+    let userContent = query;
+    
+    // If files are provided, include their content
+    if (files && files.length > 0) {
+      userContent += '\n\n---\n**Attached Files:**\n';
+      files.forEach((file, index) => {
+        userContent += `\n### File ${index + 1}: ${file.name}\n\`\`\`\n${file.content}\n\`\`\`\n`;
+      });
+    }
+    
     const messages: Message[] = [
       {
         role: 'user',
-        content: query,
+        content: userContent,
       },
     ];
 
