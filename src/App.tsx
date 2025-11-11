@@ -189,7 +189,7 @@ function App() {
             className="query-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your research query...\n\nKeyboard Shortcuts:\n• Ctrl+Enter: Submit query\n• Ctrl+K: Clear all\n• Esc: Close modals"
+            placeholder="Enter your research query... (Ctrl+Enter to submit)"
             rows={4}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
