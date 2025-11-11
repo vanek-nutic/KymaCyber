@@ -87,7 +87,7 @@ export async function queryKimiK2Streaming(
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
     let iteration = 0;
-    const MAX_ITERATIONS = 10;
+    const MAX_ITERATIONS = 20; // Increased to handle complex multi-tool queries
 
     // Step 3: Loop until no more tool calls
     while ((finish_reason === null || finish_reason === 'tool_calls') && iteration < MAX_ITERATIONS) {
@@ -194,6 +194,12 @@ export async function queryKimiK2Streaming(
 
       console.log('[Streaming] Finish reason:', finish_reason);
       console.log('[Streaming] Tool calls:', assistantMessage.tool_calls?.length || 0);
+      console.log('[Streaming] Content buffer length:', contentBuffer.length);
+
+      // Always accumulate content from this iteration
+      if (contentBuffer) {
+        finalResponse += contentBuffer;
+      }
 
       // Step 4: Handle tool calls
       if (finish_reason === 'tool_calls' && assistantMessage.tool_calls) {
@@ -259,13 +265,18 @@ export async function queryKimiK2Streaming(
             });
           }
         }
-      } else {
-        // No more tool calls, this is the final response
-        // Accumulate all content from this iteration
-        finalResponse += contentBuffer;
       }
+      // Content already accumulated above
     }
 
+    // Check if we hit max iterations
+    if (iteration >= MAX_ITERATIONS) {
+      console.warn('[Streaming] Hit MAX_ITERATIONS limit. Response may be incomplete.');
+      console.log('[Streaming] Final response length:', finalResponse.length);
+    }
+
+    console.log('[Streaming] Completed. Total iterations:', iteration);
+    console.log('[Streaming] Final response length:', finalResponse.length);
     return finalResponse || 'No response generated';
   } catch (error) {
     console.error('Streaming API Error:', error);
