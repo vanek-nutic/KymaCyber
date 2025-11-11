@@ -122,9 +122,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
           continue;
         }
 
-        // Check file size (max 100MB)
-        if (file.size > 100 * 1024 * 1024) {
-          throw new Error(`File too large: ${file.name} (max 100MB)`);
+        // Check file size (max 3.5MB due to API limit)
+        // Note: IndexedDB can store up to 100MB, but Moonshot API has 4MB message limit
+        // We use 3.5MB to account for other message content (query, prompts, etc.)
+        const MAX_FILE_SIZE = 3.5 * 1024 * 1024; // 3.5MB
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(
+            `File too large: ${file.name} (${formatBytes(file.size)}). ` +
+            `Maximum size is ${formatBytes(MAX_FILE_SIZE)} due to API limitations. ` +
+            `Please split large files into smaller chunks.`
+          );
         }
 
         try {
@@ -294,7 +301,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
       )}
 
       <div className="upload-hint">
-        💡 Tip: Upload CSV, Excel, TXT, or JSON files for AI analysis
+        💡 Tip: Upload CSV, Excel, TXT, or JSON files (max 3.5MB) for AI analysis
       </div>
     </div>
   );
