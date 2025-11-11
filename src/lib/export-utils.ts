@@ -175,7 +175,6 @@ export function downloadAsPDF(
  */
 export function downloadComprehensivePDF(
   query: string,
-  thinking: string,
   reasoningContent: string,
   toolCalls: ToolCall[],
   result: string,
@@ -263,44 +262,32 @@ export function downloadComprehensivePDF(
 
   // Table of Contents
   addSection('TABLE OF CONTENTS');
-  addText('1. AI Thinking Process', 11, 'normal');
   if (reasoningContent && reasoningContent.trim()) {
-    addText('2. AI Reasoning Process (Extended Thinking)', 11, 'normal');
-    addText('3. Tool Executions & Research Data', 11, 'normal');
-    addText('4. Final Analysis & Conclusions', 11, 'normal');
-  } else {
+    addText('1. AI Reasoning Process (Extended Thinking)', 11, 'normal');
     addText('2. Tool Executions & Research Data', 11, 'normal');
     addText('3. Final Analysis & Conclusions', 11, 'normal');
+  } else {
+    addText('1. Tool Executions & Research Data', 11, 'normal');
+    addText('2. Final Analysis & Conclusions', 11, 'normal');
   }
   
   // New page for content
   pdf.addPage();
   yPosition = margin;
 
-  // Section 1: Thinking Process
-  addSection('1. AI THINKING PROCESS');
-  if (thinking && thinking.trim()) {
-    const thinkingText = markdownToPlainText(thinking);
-    addText(thinkingText, 9, 'normal');
-  } else {
-    addText('No thinking process recorded.', 9, 'italic');
-  }
-
-  // Section 2: Reasoning Content (if using thinking model)
+  // Section 1: Reasoning Content (if using thinking model)
   if (reasoningContent && reasoningContent.trim()) {
-    pdf.addPage();
-    yPosition = margin;
-    addSection('2. AI REASONING PROCESS (EXTENDED THINKING)');
+    addSection('1. AI REASONING PROCESS (EXTENDED THINKING)');
     addText('This section shows the AI\'s internal reasoning process when using thinking models (kimi-k2-thinking or kimi-k2-thinking-turbo).', 9, 'italic');
     yPosition += lineHeight;
     const reasoningText = markdownToPlainText(reasoningContent);
     addText(reasoningText, 9, 'normal');
+    pdf.addPage();
+    yPosition = margin;
   }
 
-  // Section 3: Tool Calls
-  pdf.addPage();
-  yPosition = margin;
-  const toolSectionNum = reasoningContent && reasoningContent.trim() ? '3' : '2';
+  // Section 2: Tool Calls
+  const toolSectionNum = reasoningContent && reasoningContent.trim() ? '2' : '1';
   addSection(`${toolSectionNum}. TOOL EXECUTIONS & RESEARCH DATA`);
   
   if (toolCalls && toolCalls.length > 0) {
@@ -342,10 +329,10 @@ export function downloadComprehensivePDF(
     addText('No tool executions recorded.', 9, 'italic');
   }
 
-  // Section 4: Results
+  // Section 3: Results
   pdf.addPage();
   yPosition = margin;
-  const resultSectionNum = reasoningContent && reasoningContent.trim() ? '4' : '3';
+  const resultSectionNum = reasoningContent && reasoningContent.trim() ? '3' : '2';
   addSection(`${resultSectionNum}. FINAL ANALYSIS & CONCLUSIONS`);
   
   if (result && result.trim()) {

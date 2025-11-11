@@ -26,7 +26,6 @@ function App() {
   const [_modelParams, setModelParams] = useState({ temperature: 0.6, max_tokens: 32000 });
   
   // State for panels
-  const [thinking, setThinking] = useState<string>('');
   const [_reasoningContent, setReasoningContent] = useState<string>(''); // For thinking models
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [result, setResult] = useState<string>('');
@@ -57,7 +56,6 @@ function App() {
     if (!query.trim() || isLoading) return;
     
     // Reset state
-    setThinking('');
     setReasoningContent('');
     setToolCalls([]);
     setResult('');
@@ -77,11 +75,6 @@ function App() {
     try {
       if (useStreaming) {
         await queryKimiK2Streaming(query, selectedModel, _modelParams, (update) => {
-        // Update thinking
-        if (update.thinking) {
-          setThinking((prev) => prev + update.thinking);
-        }
-
         // Update reasoning content (thinking models only)
         if (update.reasoningContent) {
           setReasoningContent((prev) => prev + update.reasoningContent);
@@ -134,9 +127,6 @@ function App() {
       } else {
         // Non-streaming mode (fallback)
         const response = await queryKimiK2(query, (update) => {
-          if (update.thinking) {
-            setThinking((prev) => prev + update.thinking);
-          }
           if (update.toolCall) {
             setToolCalls((prev) => {
               const existingIndex = prev.findIndex((tc) => tc.id === update.toolCall!.id);
@@ -214,7 +204,6 @@ function App() {
 
   const handleClear = useCallback(() => {
     setQuery('');
-    setThinking('');
     setToolCalls([]);
     setResult('');
     setMetrics({
@@ -333,42 +322,16 @@ function App() {
         </form>
       </section>
 
-      {/* Dynamic Panel Layout (2, 3, or 4 panels based on model) */}
-      <main className={`panels-container ${selectedModel.includes('thinking') ? 'four-panel' : 'two-panel'}`}>
-        {/* Panel 1: AI Thinking (only for thinking models) */}
-        {selectedModel.includes('thinking') && (
-        <div className="panel thinking-panel">
-          <div className="panel-header">
-            <h2 className="panel-title">
-              <span className="panel-icon">🧠</span>
-              AI Thinking Process
-            </h2>
-          </div>
-          <div className="panel-content">
-            {thinking ? (
-              <div className="thinking-content">
-                <pre>{thinking}</pre>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <p>No thinking steps recorded</p>
-                <span className="empty-hint">
-                  Submit a query to see the AI's reasoning process
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-        )}
-
-        {/* Panel 2: Reasoning Content (only for thinking models) */}
+      {/* Dynamic Panel Layout (2 or 3 panels based on model) */}
+      <main className={`panels-container ${selectedModel.includes('thinking') ? 'three-panel' : 'two-panel'}`}>
+        {/* Panel 1: Reasoning Content (only for thinking models) */}
         {selectedModel.includes('thinking') && (
           <div className="panel reasoning-panel-wrapper">
             <ReasoningPanel content={_reasoningContent} isStreaming={isLoading} />
           </div>
         )}
 
-        {/* Panel 3: Tool Calls */}
+        {/* Panel 2: Tool Calls */}
         <div className="panel tools-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -413,7 +376,7 @@ function App() {
           </div>
         </div>
 
-        {/* Panel 4: Results */}
+        {/* Panel 3: Results */}
         <div className="panel results-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -440,7 +403,6 @@ function App() {
                   onClick={() => {
                     downloadComprehensivePDF(
                       query,
-                      thinking,
                       _reasoningContent,
                       toolCalls,
                       result,

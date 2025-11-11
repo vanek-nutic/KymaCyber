@@ -164,14 +164,9 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-/* Three-panel layout (legacy) */
+/* Three-panel layout (for thinking models) */
 .panels-container.three-panel {
   grid-template-columns: repeat(3, 1fr);
-}
-
-/* Four-panel layout (for thinking models) */
-.panels-container.four-panel {
-  grid-template-columns: repeat(4, 1fr);
 }
 
 .panel {
@@ -391,17 +386,9 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1400px) {
-  /* 2x2 grid for 4-panel on medium screens */
-  .panels-container.four-panel {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 1024px) {
   .panels-container.two-panel,
-  .panels-container.three-panel,
-  .panels-container.four-panel {
+  .panels-container.three-panel {
     grid-template-columns: 1fr;
   }
 }
