@@ -311,6 +311,14 @@ function App() {
             position: 'bottom-right',
           });
         }
+        // Token limit errors
+        else if (errorMessage.includes('token limit') || errorMessage.includes('exceeded model') || errorMessage.includes('262144')) {
+          userFriendlyMessage = '📊 Token Limit Exceeded: Your request is too large for the model.\n\n**What happened:** The combined size of your query, uploaded files, and conversation history exceeded the model\'s maximum capacity (256K tokens).\n\n**What you can try:**\n- Reduce the size of uploaded files\n- Use shorter queries\n- Clear conversation history\n- Split your request into smaller parts';
+          toast.error('Token limit exceeded', {
+            duration: 6000,
+            position: 'bottom-right',
+          });
+        }
         // Server errors
         else if (errorMessage.includes('500') || errorMessage.includes('502') || errorMessage.includes('503')) {
           userFriendlyMessage = '🔧 Server Error: The AI service is temporarily unavailable. Please try again in a few minutes.';

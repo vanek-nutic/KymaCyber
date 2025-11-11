@@ -3,9 +3,9 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 30%;
-  min-width: 350px;
-  max-width: 500px;
+  width: 12%;
+  min-width: 150px;
+  max-width: 200px;
   height: 100vh;
   background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
   border-left: 1px solid rgba(0, 255, 0, 0.1);
@@ -26,7 +26,7 @@
 
 .main-content-area {
   flex: 1;
-  margin-right: 30%;
+  margin-right: 12%;
   min-width: 0; /* Prevents flex item from overflowing */
 }
 
@@ -44,11 +44,11 @@
 /* Medium screens: Smaller robot sidebar */
 @media (min-width: 1025px) and (max-width: 1440px) {
   .robot-sidebar {
-    width: 25%;
-    min-width: 300px;
+    width: 10%;
+    min-width: 120px;
   }
   
   .main-content-area {
-    margin-right: 25%;
+    margin-right: 10%;
   }
 }
