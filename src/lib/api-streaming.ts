@@ -261,7 +261,8 @@ export async function queryKimiK2Streaming(
         }
       } else {
         // No more tool calls, this is the final response
-        finalResponse = contentBuffer;
+        // Accumulate all content from this iteration
+        finalResponse += contentBuffer;
       }
     }
 
