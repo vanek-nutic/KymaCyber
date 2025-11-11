@@ -45,3 +45,47 @@ Update the detection patterns in `generateDownloadableFiles()` to handle:
 2. Improve CSV extraction from response
 3. Re-test with same query
 4. Verify download link appears and works
+
+
+## Second Test (After Pattern Update)
+
+**Same Query:** "Create a sample sales data CSV file with 10 products..."
+
+### AI Response Format
+
+The AI now says:
+> "Perfect! I've successfully created a sample sales data CSV file with 10 products. The file `sales_data.csv` contains:"
+
+This format uses backticks around the filename, which should match Pattern 2!
+
+### Result
+
+❌ **Download section STILL did not appear**
+
+### Debug Analysis
+
+The pattern `/\*\*File(?:\s+name)?:\*\*\s+`([a-zA-Z0-9_-]+\.[a-z]+)`/gi` is looking for:
+- **File:** `filename.csv` OR
+- **File name:** `filename.csv`
+
+But the AI response says:
+- "The file `sales_data.csv` contains:"
+
+This does NOT match because:
+1. There's no "**File:**" or "**File name:**" prefix
+2. It's just inline text with backticks
+
+### Real Issue Discovered
+
+The file detection is running on the markdown text, but the AI is not consistently using the expected format. We need to:
+
+1. Look for ANY backtick-wrapped filename with common extensions
+2. Extract CSV content from code blocks
+3. Match the actual response patterns the AI uses
+
+### Next Fix
+
+Update detection to match:
+- `filename.csv` (any backtick-wrapped filename)
+- Code blocks with CSV content
+- Markdown tables

@@ -16,12 +16,14 @@ export interface DownloadableFile {
  */
 export function detectFileMentions(text: string): Array<{ filename: string; description: string }> {
   const mentions: Array<{ filename: string; description: string }> = [];
+  console.log('[File Detection] Analyzing text:', text.substring(0, 200));
   
   // Pattern 1: ✅ filename.ext - description
   const pattern1 = /✅\s+([a-zA-Z0-9_-]+\.[a-z]+)\s+-\s+(.+?)(?:\n|$)/g;
   let match;
   
   while ((match = pattern1.exec(text)) !== null) {
+    console.log('[Pattern 1] Found:', match[1]);
     mentions.push({
       filename: match[1],
       description: match[2].trim()
@@ -32,6 +34,7 @@ export function detectFileMentions(text: string): Array<{ filename: string; desc
   const pattern2 = /\*\*File(?:\s+name)?:\*\*\s+`([a-zA-Z0-9_-]+\.[a-z]+)`/gi;
   while ((match = pattern2.exec(text)) !== null) {
     const filename = match[1];
+    console.log('[Pattern 2] Found:', filename);
     if (!mentions.find(m => m.filename === filename)) {
       mentions.push({
         filename,
@@ -44,6 +47,7 @@ export function detectFileMentions(text: string): Array<{ filename: string; desc
   const pattern3 = /\*\*File(?:\s+name)?:\*\*\s+([a-zA-Z0-9_-]+\.[a-z]+)/gi;
   while ((match = pattern3.exec(text)) !== null) {
     const filename = match[1];
+    console.log('[Pattern 3] Found:', filename);
     if (!mentions.find(m => m.filename === filename)) {
       mentions.push({
         filename,
@@ -56,6 +60,7 @@ export function detectFileMentions(text: string): Array<{ filename: string; desc
   const pattern4 = /(exported|saved|created|generated)\s+([a-zA-Z0-9_-]+\.[a-z]+)/gi;
   while ((match = pattern4.exec(text)) !== null) {
     const filename = match[2];
+    console.log('[Pattern 4] Found:', filename);
     if (!mentions.find(m => m.filename === filename)) {
       mentions.push({
         filename,
@@ -64,6 +69,20 @@ export function detectFileMentions(text: string): Array<{ filename: string; desc
     }
   }
   
+  // Pattern 5: ANY backtick-wrapped filename with common extensions
+  const pattern5 = /`([a-zA-Z0-9_-]+\.(csv|xlsx|json|txt))`/gi;
+  while ((match = pattern5.exec(text)) !== null) {
+    const filename = match[1];
+    console.log('[Pattern 5] Found:', filename);
+    if (!mentions.find(m => m.filename === filename)) {
+      mentions.push({
+        filename,
+        description: ''
+      });
+    }
+  }
+  
+  console.log('[File Detection] Total mentions found:', mentions.length, mentions);
   return mentions;
 }
 
