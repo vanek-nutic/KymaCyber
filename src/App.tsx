@@ -12,6 +12,7 @@ import { MemoryPanel } from './components/MemoryPanel';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
+import { generateDownloadableFiles, downloadFile, getMimeType, formatFileSize, type DownloadableFile } from './lib/file-download';
 import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
@@ -39,8 +40,21 @@ function App() {
     outputTokens: 0,
   });
 
+  // State for downloadable files
+  const [downloadableFiles, setDownloadableFiles] = useState<DownloadableFile[]>([]);
+
   // State for memory panel
   const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
+
+  // Detect downloadable files when result changes
+  useEffect(() => {
+    if (result) {
+      const files = generateDownloadableFiles(result);
+      setDownloadableFiles(files);
+    } else {
+      setDownloadableFiles([]);
+    }
+  }, [result]);
 
   // Auto-adjust parameters when model changes
   useEffect(() => {
@@ -514,9 +528,41 @@ function App() {
           </div>
           <div className="panel-content">
             {result ? (
-              <div className="result-content">
-                <MarkdownRenderer content={result} />
-              </div>
+              <>
+                <div className="result-content">
+                  <MarkdownRenderer content={result} />
+                </div>
+                {downloadableFiles.length > 0 && (
+                  <div className="downloadable-files-section">
+                    <h3 className="downloadable-files-title">📦 Generated Files</h3>
+                    <div className="downloadable-files-list">
+                      {downloadableFiles.map((file, index) => (
+                        <div key={index} className="downloadable-file-item">
+                          <div className="file-info">
+                            <button
+                              className="file-name-btn"
+                              onClick={() => {
+                                downloadFile(file.filename, file.content, getMimeType(file.type));
+                                toast.success(`Downloaded ${file.filename}!`, {
+                                  duration: 2000,
+                                  position: 'bottom-right',
+                                });
+                              }}
+                              title={`Click to download ${file.filename}`}
+                            >
+                              📥 {file.filename}
+                            </button>
+                            <span className="file-size">{formatFileSize(file.size)}</span>
+                          </div>
+                          {file.description && (
+                            <div className="file-description">{file.description}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="empty-state">
                 <p>Waiting for results...</p>
