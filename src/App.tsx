@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import './styles/globals.css';
 import './App.css';
+import './components/SplineScene.css';
 import { queryKimiK2 } from './lib/api';
 import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
@@ -10,6 +11,7 @@ import { ModelSelector } from './components/ModelSelector';
 import { ReasoningPanel } from './components/ReasoningPanel';
 import { MemoryPanel } from './components/MemoryPanel';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
+import { SplineDemo } from './components/SplineDemo';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
 import { generateDownloadableFiles, downloadFile, getMimeType, formatFileSize, type DownloadableFile } from './lib/file-download';
@@ -353,6 +355,11 @@ function App() {
           </p>
         </div>
       </header>
+
+      {/* Spline 3D Demo Section */}
+      <section className="spline-section" style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+        <SplineDemo />
+      </section>
 
       {/* Input Section */}
       <section className="input-section">
