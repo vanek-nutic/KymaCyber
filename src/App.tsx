@@ -72,17 +72,17 @@ function App() {
     let finalResult = '';
     let finalToolCallsCount = 0;
 
-    try {
-      // Load files from IndexedDB
-      const { loadFiles } = await import('./lib/file-storage');
-      const loadedFiles = await loadFiles();
-      console.log('[DEBUG] Loaded files from IndexedDB:', loadedFiles.length, 'files');
-      const filesForAPI = loadedFiles.map((f) => ({
+    // Load files from IndexedDB (outside try block for fallback access)
+    const { loadFiles } = await import('./lib/file-storage');
+    const loadedFiles = await loadFiles();
+    console.log('[DEBUG] Loaded files from IndexedDB:', loadedFiles.length, 'files');
+    const filesForAPI = loadedFiles.map((f) => ({
         name: f.name,
         content: f.content
       }));
       console.log('[DEBUG] Files for API:', filesForAPI.length, 'files', filesForAPI.map(f => `${f.name} (${f.content.length} chars)`));
       
+    try {
       if (useStreaming) {
         await queryKimiK2Streaming(query, selectedModel, _modelParams, filesForAPI, (update) => {
         // Update reasoning content (thinking models only)
@@ -167,7 +167,62 @@ function App() {
       }
     } catch (error) {
       console.error('Query failed:', error);
-      setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Check if K2 Thinking is overloaded and fallback to K2 Thinking Turbo
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isEngineOverloaded = errorMessage.includes('engine_overloaded_error') || errorMessage.includes('currently overloaded');
+      const isK2Thinking = selectedModel === 'kimi-k2-thinking';
+      
+      if (isEngineOverloaded && isK2Thinking) {
+        // Automatic fallback to K2 Thinking Turbo
+        const fallbackModel = 'kimi-k2-thinking-turbo';
+        setResult(`⚠️ K2 Thinking is currently overloaded. Automatically switching to K2 Thinking Turbo...\n\n`);
+        
+        try {
+          // Retry with fallback model
+          let fallbackResult = '';
+          
+          if (useStreaming) {
+            await queryKimiK2Streaming(query, fallbackModel, _modelParams, filesForAPI, (update) => {
+              if (update.reasoningContent) {
+                setReasoningContent((prev) => prev + update.reasoningContent);
+              }
+              if (update.toolCall) {
+                setToolCalls((prev) => {
+                  const existingIndex = prev.findIndex((tc) => tc.id === update.toolCall!.id);
+                  if (existingIndex >= 0) {
+                    const newToolCalls = [...prev];
+                    newToolCalls[existingIndex] = update.toolCall!;
+                    return newToolCalls;
+                  } else {
+                    return [...prev, update.toolCall!];
+                  }
+                });
+                finalToolCallsCount++;
+                setMetrics((prev) => ({ ...prev, toolCalls: prev.toolCalls + 1 }));
+              }
+              if (update.content) {
+                fallbackResult += update.content;
+                setResult((prev) => prev + update.content);
+              }
+            });
+          } else {
+            const response = await queryKimiK2(query, filesForAPI);
+            fallbackResult = response;
+            setResult((prev) => prev + response);
+          }
+          
+          // Success message
+          console.log(`✅ Successfully used ${fallbackModel} as fallback`);
+          
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+          setResult(`Error: Both K2 Thinking and K2 Thinking Turbo are currently unavailable.\n\n${fallbackError instanceof Error ? fallbackError.message : 'Unknown error'}\n\nPlease try again in a few minutes.`);
+        }
+      } else {
+        // Normal error handling
+        setResult(`Error: ${errorMessage}`);
+      }
     } finally {
       setIsLoading(false);
       const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000);
