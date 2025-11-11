@@ -5,78 +5,15 @@
  */
 
 import type { ToolCall, ToolDefinition, Message } from '../types';
+import { getAllToolDefinitions } from './tools';
+import { executeTool } from './tool-executors';
 
 const API_BASE_URL = 'https://api.moonshot.ai/v1';
 const API_KEY = import.meta.env.VITE_MOONSHOT_API_KEY || 'sk-UousIBehzfnqFSVL3UHD7vr1uesytwg9P2vop9x53LNmJsyW';
 
-/**
- * Define web-search tool using JSON Schema format
- */
-function getWebSearchToolDefinition(): ToolDefinition {
-  return {
-    type: 'function',
-    function: {
-      name: 'web_search',
-      description: 'Search the internet for current information, news, or facts.',
-      parameters: {
-        type: 'object',
-        required: ['query'],
-        properties: {
-          query: {
-            type: 'string',
-            description: 'The search query to look up on the internet',
-          },
-        },
-      },
-    },
-  };
-}
+// Tool definitions are now imported from tools.ts
 
-/**
- * Execute web search using Tavily API
- */
-async function executeWebSearch(query: string): Promise<string> {
-  const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY;
-  
-  try {
-    const response = await fetch('https://api.tavily.com/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        api_key: TAVILY_API_KEY,
-        query,
-        search_depth: 'basic',
-        include_answer: true,
-        max_results: 5,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Tavily API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
-    // Format results
-    const results = {
-      answer: data.answer || '',
-      results: data.results?.slice(0, 3).map((r: any) => ({
-        title: r.title,
-        url: r.url,
-        content: r.content?.substring(0, 200),
-      })) || [],
-    };
-
-    return JSON.stringify(results, null, 2);
-  } catch (error) {
-    console.error('Web search error:', error);
-    return JSON.stringify({
-      error: error instanceof Error ? error.message : 'Search failed',
-    });
-  }
-}
+// Tool execution is now handled by tool-executors.ts
 
 /**
  * Parse Server-Sent Events (SSE) stream
@@ -133,8 +70,9 @@ export async function queryKimiK2Streaming(
   }) => void
 ): Promise<string> {
   try {
-    // Step 1: Define tools
-    const tools = [getWebSearchToolDefinition()];
+    // Step 1: Get all available tools
+    const tools = getAllToolDefinitions();
+    console.log(`[Multi-Tool] Using ${tools.length} tools:`, tools.map(t => t.function.name));
     
     // Step 2: Create messages array
     const messages: Message[] = [
@@ -277,13 +215,8 @@ export async function queryKimiK2Streaming(
             // Parse arguments
             const args = JSON.parse(toolCall.function.arguments);
             
-            // Execute the tool
-            let result: string;
-            if (toolCall.function.name === 'web_search') {
-              result = await executeWebSearch(args.query);
-            } else {
-              result = JSON.stringify({ error: `Unknown tool: ${toolCall.function.name}` });
-            }
+            // Execute the tool using the unified executor
+            const result = await executeTool(toolCall.function.name, args);
 
             // Report success
             onProgress({
