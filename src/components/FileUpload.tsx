@@ -59,9 +59,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
         continue;
       }
       
-      // Check file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert(`File too large: ${file.name} (max 10MB)`);
+      // Check file size (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        alert(`File too large: ${file.name} (max 100MB)`);
         continue;
       }
       
