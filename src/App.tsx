@@ -2,10 +2,12 @@ import { useState } from 'react';
 import './styles/globals.css';
 import './App.css';
 import { queryKimiK2 } from './lib/api';
+import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
 
 function App() {
   const [query, setQuery] = useState('');
+  const [useStreaming, setUseStreaming] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   
   // State for panels
@@ -42,7 +44,8 @@ function App() {
     const startTime = Date.now();
 
     try {
-      await queryKimiK2(query, (update) => {
+      const apiFunction = useStreaming ? queryKimiK2Streaming : queryKimiK2;
+      await apiFunction(query, (update) => {
         // Update thinking
         if (update.thinking) {
           setThinking((prev) => prev + update.thinking);
@@ -171,6 +174,15 @@ function App() {
               disabled={isLoading}
             >
               Clear
+            </button>
+            <button
+              type="button"
+              className={`toggle-button ${useStreaming ? 'active' : ''}`}
+              onClick={() => setUseStreaming(!useStreaming)}
+              disabled={isLoading}
+              title={useStreaming ? 'Streaming: ON' : 'Streaming: OFF'}
+            >
+              {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
             </button>
           </div>
         </form>
