@@ -37,7 +37,11 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     }
   };
 
-  const saveAsFile = (code: string, language: string) => {
+  const saveAsFile = (code: string, language: string, codeId: string) => {
+    // Get the actual text content from the code element
+    const codeElement = document.querySelector(`[data-code-id="${codeId}"]`);
+    const actualCode = codeElement ? codeElement.textContent || code : code;
+    
     // Map language to file extension
     const extensionMap: Record<string, string> = {
       html: '.html',
@@ -87,7 +91,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     const filename = `code_${Date.now()}${extension}`;
 
     try {
-      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([actualCode], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -151,7 +155,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                       </button>
                       <button
                         className="save-button"
-                        onClick={() => saveAsFile(codeString, match[1])}
+                        onClick={() => saveAsFile(codeString, match[1], codeId)}
                         title="Save as file"
                       >
                         💾 Save As
@@ -159,7 +163,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                     </div>
                   </div>
                   <pre className={className}>
-                    <code className={className} {...props}>
+                    <code className={className} data-code-id={codeId} {...props}>
                       {children}
                     </code>
                   </pre>
