@@ -7,6 +7,7 @@ import type { ToolCall, Metrics } from './types';
 import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
 import { ModelSelector } from './components/ModelSelector';
+import { ReasoningPanel } from './components/ReasoningPanel';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
@@ -70,11 +71,16 @@ function App() {
     let finalToolCallsCount = 0;
 
     try {
-      const apiFunction = useStreaming ? queryKimiK2Streaming : queryKimiK2;
-      await apiFunction(query, (update) => {
+      if (useStreaming) {
+        await queryKimiK2Streaming(query, selectedModel, _modelParams, (update) => {
         // Update thinking
         if (update.thinking) {
           setThinking((prev) => prev + update.thinking);
+        }
+
+        // Update reasoning content (thinking models only)
+        if (update.reasoningContent) {
+          setReasoningContent((prev) => prev + update.reasoningContent);
         }
 
         // Update tool calls
@@ -120,7 +126,41 @@ function App() {
           ...prev,
           elapsedTime: Math.floor((Date.now() - startTime) / 1000),
         }));
-      });
+        });
+      } else {
+        // Non-streaming mode (fallback)
+        const response = await queryKimiK2(query, (update) => {
+          if (update.thinking) {
+            setThinking((prev) => prev + update.thinking);
+          }
+          if (update.toolCall) {
+            setToolCalls((prev) => {
+              const existingIndex = prev.findIndex((tc) => tc.id === update.toolCall!.id);
+              if (existingIndex >= 0) {
+                const newToolCalls = [...prev];
+                newToolCalls[existingIndex] = update.toolCall!;
+                return newToolCalls;
+              } else {
+                return [...prev, update.toolCall!];
+              }
+            });
+            finalToolCallsCount++;
+            setMetrics((prev) => ({ ...prev, toolCalls: prev.toolCalls + 1 }));
+          }
+          if (update.content) {
+            finalResult += update.content;
+            setResult((prev) => prev + update.content);
+          }
+          if (update.metrics) {
+            setMetrics((prev) => ({ ...prev, ...update.metrics }));
+          }
+          setMetrics((prev) => ({
+            ...prev,
+            elapsedTime: Math.floor((Date.now() - startTime) / 1000),
+          }));
+        });
+        finalResult = response;
+      }
     } catch (error) {
       console.error('Query failed:', error);
       setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -282,9 +322,9 @@ function App() {
         </form>
       </section>
 
-      {/* Three-Panel Layout */}
-      <main className="panels-container">
-        {/* Left Panel: AI Thinking */}
+      {/* Dynamic Panel Layout (3 or 4 panels based on model) */}
+      <main className={`panels-container ${selectedModel.includes('thinking') ? 'four-panel' : 'three-panel'}`}>
+        {/* Panel 1: AI Thinking */}
         <div className="panel thinking-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -308,7 +348,14 @@ function App() {
           </div>
         </div>
 
-        {/* Center Panel: Tool Calls */}
+        {/* Panel 2: Reasoning Content (only for thinking models) */}
+        {selectedModel.includes('thinking') && (
+          <div className="panel reasoning-panel-wrapper">
+            <ReasoningPanel content={_reasoningContent} isStreaming={isLoading} />
+          </div>
+        )}
+
+        {/* Panel 3: Tool Calls */}
         <div className="panel tools-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -353,7 +400,7 @@ function App() {
           </div>
         </div>
 
-        {/* Right Panel: Results */}
+        {/* Panel 4: Results */}
         <div className="panel results-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -381,6 +428,7 @@ function App() {
                     downloadComprehensivePDF(
                       query,
                       thinking,
+                      _reasoningContent,
                       toolCalls,
                       result,
                       metrics,

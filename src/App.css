@@ -151,13 +151,22 @@
 .panels-container {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 1px;
   background: var(--cyber-border);
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   padding: var(--spacing-xl);
+}
+
+/* Three-panel layout (default) */
+.panels-container.three-panel {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Four-panel layout (for thinking models) */
+.panels-container.four-panel {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .panel {
@@ -253,9 +262,140 @@
   font-family: 'Fira Code', monospace;
 }
 
+/* Reasoning Panel Specific Styles */
+.reasoning-panel {
+  background: var(--cyber-bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--cyber-border);
+  height: 100%;
+}
+
+.reasoning-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--cyber-bg-tertiary);
+  border-bottom: 1px solid var(--cyber-border);
+}
+
+.reasoning-panel .panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--cyber-text-primary);
+}
+
+.reasoning-panel .panel-icon {
+  font-size: 1.25rem;
+}
+
+.reasoning-panel .streaming-indicator {
+  color: var(--cyber-accent-primary);
+  font-size: 0.75rem;
+  margin-left: var(--spacing-xs);
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.reasoning-panel .panel-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.reasoning-panel .icon-button {
+  background: transparent;
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--cyber-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 1rem;
+}
+
+.reasoning-panel .icon-button:hover:not(:disabled) {
+  background: var(--cyber-bg-primary);
+  border-color: var(--cyber-accent-primary);
+  color: var(--cyber-accent-primary);
+}
+
+.reasoning-panel .icon-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.reasoning-panel .panel-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.reasoning-panel .reasoning-content {
+  color: var(--cyber-text-primary);
+  line-height: 1.6;
+}
+
+.reasoning-panel .reasoning-content p {
+  margin-bottom: var(--spacing-md);
+}
+
+.reasoning-panel .reasoning-content pre {
+  background: var(--cyber-bg-tertiary);
+  border: 1px solid var(--cyber-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  overflow-x: auto;
+  margin: var(--spacing-md) 0;
+}
+
+.reasoning-panel .reasoning-content code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+}
+
+.reasoning-panel .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--cyber-text-muted);
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+}
+
+.reasoning-panel .empty-state p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.reasoning-panel .empty-state .hint {
+  font-size: 0.875rem;
+  opacity: 0.7;
+  max-width: 400px;
+}
+
+.reasoning-panel .empty-state strong {
+  color: var(--cyber-accent-primary);
+}
+
 /* Responsive Design */
+@media (max-width: 1400px) {
+  /* 2x2 grid for 4-panel on medium screens */
+  .panels-container.four-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
-  .panels-container {
+  .panels-container.three-panel,
+  .panels-container.four-panel {
     grid-template-columns: 1fr;
   }
 }

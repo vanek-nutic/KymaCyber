@@ -57,8 +57,11 @@ async function* parseSSEStream(response: Response) {
  */
 export async function queryKimiK2Streaming(
   query: string,
+  model: string,
+  params: { temperature: number; max_tokens: number },
   onProgress: (update: {
     thinking?: string;
+    reasoningContent?: string;
     toolCall?: ToolCall;
     content?: string;
     metrics?: {
@@ -101,10 +104,11 @@ export async function queryKimiK2Streaming(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'kimi-k2-turbo-preview',
+          model,
           messages,
           tools,
-          temperature: 0.3,
+          temperature: params.temperature,
+          max_tokens: params.max_tokens,
           stream: true, // Enable streaming
         }),
       });
@@ -124,6 +128,11 @@ export async function queryKimiK2Streaming(
         if (!choice) continue;
 
         const delta = choice.delta;
+        
+        // Handle reasoning content (thinking models only)
+        if (delta.reasoning_content) {
+          onProgress({ reasoningContent: delta.reasoning_content });
+        }
         
         // Handle content streaming
         if (delta.content) {

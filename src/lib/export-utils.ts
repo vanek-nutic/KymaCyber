@@ -176,6 +176,7 @@ export function downloadAsPDF(
 export function downloadComprehensivePDF(
   query: string,
   thinking: string,
+  reasoningContent: string,
   toolCalls: ToolCall[],
   result: string,
   metrics: { thinkingTokens: number; toolCalls: number; elapsedTime: number },
@@ -263,8 +264,14 @@ export function downloadComprehensivePDF(
   // Table of Contents
   addSection('TABLE OF CONTENTS');
   addText('1. AI Thinking Process', 11, 'normal');
-  addText('2. Tool Executions & Research Data', 11, 'normal');
-  addText('3. Final Analysis & Conclusions', 11, 'normal');
+  if (reasoningContent && reasoningContent.trim()) {
+    addText('2. AI Reasoning Process (Extended Thinking)', 11, 'normal');
+    addText('3. Tool Executions & Research Data', 11, 'normal');
+    addText('4. Final Analysis & Conclusions', 11, 'normal');
+  } else {
+    addText('2. Tool Executions & Research Data', 11, 'normal');
+    addText('3. Final Analysis & Conclusions', 11, 'normal');
+  }
   
   // New page for content
   pdf.addPage();
@@ -279,10 +286,22 @@ export function downloadComprehensivePDF(
     addText('No thinking process recorded.', 9, 'italic');
   }
 
-  // Section 2: Tool Calls
+  // Section 2: Reasoning Content (if using thinking model)
+  if (reasoningContent && reasoningContent.trim()) {
+    pdf.addPage();
+    yPosition = margin;
+    addSection('2. AI REASONING PROCESS (EXTENDED THINKING)');
+    addText('This section shows the AI\'s internal reasoning process when using thinking models (kimi-k2-thinking or kimi-k2-thinking-turbo).', 9, 'italic');
+    yPosition += lineHeight;
+    const reasoningText = markdownToPlainText(reasoningContent);
+    addText(reasoningText, 9, 'normal');
+  }
+
+  // Section 3: Tool Calls
   pdf.addPage();
   yPosition = margin;
-  addSection('2. TOOL EXECUTIONS & RESEARCH DATA');
+  const toolSectionNum = reasoningContent && reasoningContent.trim() ? '3' : '2';
+  addSection(`${toolSectionNum}. TOOL EXECUTIONS & RESEARCH DATA`);
   
   if (toolCalls && toolCalls.length > 0) {
     toolCalls.forEach((tool, index) => {
@@ -323,10 +342,11 @@ export function downloadComprehensivePDF(
     addText('No tool executions recorded.', 9, 'italic');
   }
 
-  // Section 3: Final Results
+  // Section 4: Results
   pdf.addPage();
   yPosition = margin;
-  addSection('3. FINAL ANALYSIS & CONCLUSIONS');
+  const resultSectionNum = reasoningContent && reasoningContent.trim() ? '4' : '3';
+  addSection(`${resultSectionNum}. FINAL ANALYSIS & CONCLUSIONS`);
   
   if (result && result.trim()) {
     const resultText = markdownToPlainText(result);
