@@ -4,7 +4,7 @@
  * Based on Moonshot SSE streaming documentation
  */
 
-import type { ToolCall, ToolDefinition, Message } from '../types';
+import type { ToolCall, Message } from '../types';
 import { getAllToolDefinitions } from './tools';
 import { executeTool } from './tool-executors';
 

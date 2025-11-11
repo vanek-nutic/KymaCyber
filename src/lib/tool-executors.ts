@@ -142,7 +142,7 @@ async function executeConvert(args: {
 }): Promise<string> {
   try {
     // Simple conversion examples
-    const conversions: Record<string, Record<string, number>> = {
+    const conversions: Record<string, Record<string, (v: number) => number>> = {
       celsius: { fahrenheit: (v: number) => (v * 9/5) + 32, kelvin: (v: number) => v + 273.15 },
       fahrenheit: { celsius: (v: number) => (v - 32) * 5/9, kelvin: (v: number) => (v - 32) * 5/9 + 273.15 },
       miles: { km: (v: number) => v * 1.60934, meters: (v: number) => v * 1609.34 },

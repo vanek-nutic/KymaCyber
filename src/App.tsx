@@ -5,7 +5,7 @@ import { queryKimiK2 } from './lib/api';
 import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
 import { FileUpload, type UploadedFile } from './components/FileUpload';
-import { ChatHistory, type ChatMessage, type ChatHistoryHandle } from './components/ChatHistory';
+import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { Toaster, toast } from 'react-hot-toast';
@@ -15,7 +15,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [_uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
   // State for panels
   const [thinking, setThinking] = useState<string>('');
