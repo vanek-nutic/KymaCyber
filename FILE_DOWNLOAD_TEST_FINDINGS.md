@@ -89,3 +89,47 @@ Update detection to match:
 - `filename.csv` (any backtick-wrapped filename)
 - Code blocks with CSV content
 - Markdown tables
+
+
+## Third Test (After Pattern 5 and Debug Logging)
+
+**Query:** "Create a CSV file called test.csv with 3 rows of sample data"
+
+### AI Response
+
+✅ The AI successfully created the file:
+> "Perfect! I've successfully created a CSV file called `test.csv` with 3 rows of sample data."
+
+The filename `test.csv` appears in backticks - this should match Pattern 5!
+
+### Critical Finding
+
+❌ **NO CONSOLE LOGS APPEARED**
+
+This means the `useEffect` hook in App.tsx is **NOT RUNNING AT ALL**.
+
+### Root Cause Analysis
+
+Looking at App.tsx line 155-162:
+```typescript
+useEffect(() => {
+  const files = detectDownloadableFiles(result);
+  setDownloadableFiles(files);
+}, [result]);
+```
+
+The problem: The `useEffect` depends on `result`, but `result` is being updated **character by character** during streaming!
+
+This causes:
+1. Too many re-renders (performance issue)
+2. React might be batching/skipping the effect
+3. The detection might run before the complete response is ready
+
+### Solution Needed
+
+We need to run file detection AFTER the streaming is complete, not on every character update.
+
+Options:
+1. Add a `isStreaming` flag and only detect when streaming stops
+2. Debounce the detection
+3. Run detection in the streaming completion callback

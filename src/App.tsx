@@ -46,15 +46,17 @@ function App() {
   // State for memory panel
   const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
 
-  // Detect downloadable files when result changes
+  // Detect downloadable files after streaming completes
   useEffect(() => {
-    if (result) {
+    if (!isLoading && result) {
+      console.log('[File Download] Detecting files in result...');
       const files = generateDownloadableFiles(result);
+      console.log('[File Download] Files detected:', files);
       setDownloadableFiles(files);
-    } else {
+    } else if (!result) {
       setDownloadableFiles([]);
     }
-  }, [result]);
+  }, [isLoading, result]);
 
   // Auto-adjust parameters when model changes
   useEffect(() => {
