@@ -4,11 +4,13 @@ import './App.css';
 import { queryKimiK2 } from './lib/api';
 import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
+import { FileUpload, type UploadedFile } from './components/FileUpload';
 
 function App() {
   const [query, setQuery] = useState('');
   const [useStreaming, setUseStreaming] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
   // State for panels
   const [thinking, setThinking] = useState<string>('');
@@ -185,6 +187,9 @@ function App() {
               {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
             </button>
           </div>
+          
+          {/* File Upload */}
+          <FileUpload onFilesChange={setUploadedFiles} />
         </form>
       </section>
 
