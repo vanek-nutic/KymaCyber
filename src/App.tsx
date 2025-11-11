@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import './styles/globals.css';
 import './App.css';
 import { queryKimiK2 } from './lib/api';
@@ -6,6 +6,7 @@ import { queryKimiK2Streaming } from './lib/api-streaming';
 import type { ToolCall, Metrics } from './types';
 import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
+import { ModelSelector } from './components/ModelSelector';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
@@ -18,8 +19,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [_uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
+  // Model selection state
+  const [selectedModel, setSelectedModel] = useState<string>('kimi-k2-turbo-preview');
+  const [_modelParams, setModelParams] = useState({ temperature: 0.6, max_tokens: 32000 });
+  
   // State for panels
   const [thinking, setThinking] = useState<string>('');
+  const [_reasoningContent, setReasoningContent] = useState<string>(''); // For thinking models
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [result, setResult] = useState<string>('');
   
@@ -32,12 +38,22 @@ function App() {
     outputTokens: 0,
   });
 
+  // Auto-adjust parameters when model changes
+  useEffect(() => {
+    if (selectedModel.includes('thinking')) {
+      setModelParams({ temperature: 1.0, max_tokens: 16000 });
+    } else {
+      setModelParams({ temperature: 0.6, max_tokens: 32000 });
+    }
+  }, [selectedModel]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim() || isLoading) return;
     
     // Reset state
     setThinking('');
+    setReasoningContent('');
     setToolCalls([]);
     setResult('');
     setMetrics({
@@ -250,6 +266,15 @@ function App() {
               {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
             </button>
             <ChatHistory ref={chatHistoryRef} onLoadQuery={handleLoadQuery} />
+          </div>
+          
+          {/* Model Selection */}
+          <div className="model-selection-row">
+            <label className="model-label">🤖 AI Model:</label>
+            <ModelSelector
+              selectedModel={selectedModel}
+              onModelChange={setSelectedModel}
+            />
           </div>
           
           {/* File Upload */}
