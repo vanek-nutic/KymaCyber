@@ -8,6 +8,7 @@ import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { downloadAsPDF, downloadAsMarkdown, downloadAsText, generateFilename, detectGeneratedFiles } from './lib/export-utils';
 import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
@@ -114,6 +115,22 @@ function App() {
         ...prev,
         elapsedTime: finalElapsedTime,
       }));
+      
+      // Detect if AI mentioned generating files
+      if (finalResult) {
+        const detectedFiles = detectGeneratedFiles(finalResult);
+        if (detectedFiles.length > 0) {
+          console.log('Detected generated files:', detectedFiles);
+          toast(
+            `AI mentioned creating ${detectedFiles.length} file(s). Use export buttons to download the results!`,
+            {
+              duration: 5000,
+              position: 'bottom-right',
+              icon: '📁',
+            }
+          );
+        }
+      }
       
       // Save to chat history if we have a result
       if (finalResult && chatHistoryRef.current) {
@@ -319,19 +336,60 @@ function App() {
               Results
             </h2>
             {result && (
-              <button
-                className="copy-result-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(result);
-                  toast.success('Result copied to clipboard!', {
-                    duration: 2000,
-                    position: 'bottom-right',
-                  });
-                }}
-                title="Copy result"
-              >
-                📋 Copy
-              </button>
+              <div className="export-buttons">
+                <button
+                  className="export-btn copy-btn"
+                  onClick={() => {
+                    navigator.clipboard.writeText(result);
+                    toast.success('Result copied to clipboard!', {
+                      duration: 2000,
+                      position: 'bottom-right',
+                    });
+                  }}
+                  title="Copy to clipboard"
+                >
+                  📋 Copy
+                </button>
+                <button
+                  className="export-btn pdf-btn"
+                  onClick={() => {
+                    downloadAsPDF(result, query, generateFilename('kimi-cyber-report', 'pdf'));
+                    toast.success('PDF downloaded!', {
+                      duration: 2000,
+                      position: 'bottom-right',
+                    });
+                  }}
+                  title="Download as PDF"
+                >
+                  📥 PDF
+                </button>
+                <button
+                  className="export-btn md-btn"
+                  onClick={() => {
+                    downloadAsMarkdown(result, generateFilename('kimi-cyber-report', 'md'));
+                    toast.success('Markdown downloaded!', {
+                      duration: 2000,
+                      position: 'bottom-right',
+                    });
+                  }}
+                  title="Download as Markdown"
+                >
+                  📝 MD
+                </button>
+                <button
+                  className="export-btn txt-btn"
+                  onClick={() => {
+                    downloadAsText(result, generateFilename('kimi-cyber-report', 'txt'));
+                    toast.success('Text file downloaded!', {
+                      duration: 2000,
+                      position: 'bottom-right',
+                    });
+                  }}
+                  title="Download as Text"
+                >
+                  📄 TXT
+                </button>
+              </div>
             )}
           </div>
           <div className="panel-content">
