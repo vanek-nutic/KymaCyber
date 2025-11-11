@@ -333,9 +333,10 @@ function App() {
         </form>
       </section>
 
-      {/* Dynamic Panel Layout (3 or 4 panels based on model) */}
-      <main className={`panels-container ${selectedModel.includes('thinking') ? 'four-panel' : 'three-panel'}`}>
-        {/* Panel 1: AI Thinking */}
+      {/* Dynamic Panel Layout (2, 3, or 4 panels based on model) */}
+      <main className={`panels-container ${selectedModel.includes('thinking') ? 'four-panel' : 'two-panel'}`}>
+        {/* Panel 1: AI Thinking (only for thinking models) */}
+        {selectedModel.includes('thinking') && (
         <div className="panel thinking-panel">
           <div className="panel-header">
             <h2 className="panel-title">
@@ -358,6 +359,7 @@ function App() {
             )}
           </div>
         </div>
+        )}
 
         {/* Panel 2: Reasoning Content (only for thinking models) */}
         {selectedModel.includes('thinking') && (

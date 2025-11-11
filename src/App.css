@@ -159,7 +159,12 @@
   padding: var(--spacing-xl);
 }
 
-/* Three-panel layout (default) */
+/* Two-panel layout (for non-thinking models) */
+.panels-container.two-panel {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Three-panel layout (legacy) */
 .panels-container.three-panel {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -394,6 +399,7 @@
 }
 
 @media (max-width: 1024px) {
+  .panels-container.two-panel,
   .panels-container.three-panel,
   .panels-container.four-panel {
     grid-template-columns: 1fr;
