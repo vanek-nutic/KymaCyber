@@ -8,7 +8,7 @@ import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { downloadAsPDF, downloadAsMarkdown, downloadAsText, generateFilename, detectGeneratedFiles } from './lib/export-utils';
+import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
 import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
@@ -353,13 +353,20 @@ function App() {
                 <button
                   className="export-btn pdf-btn"
                   onClick={() => {
-                    downloadAsPDF(result, query, generateFilename('kimi-cyber-report', 'pdf'));
-                    toast.success('PDF downloaded!', {
-                      duration: 2000,
+                    downloadComprehensivePDF(
+                      query,
+                      thinking,
+                      toolCalls,
+                      result,
+                      metrics,
+                      generateFilename('kimi-cyber-comprehensive-report', 'pdf')
+                    );
+                    toast.success('Comprehensive PDF report downloaded!', {
+                      duration: 3000,
                       position: 'bottom-right',
                     });
                   }}
-                  title="Download as PDF"
+                  title="Download comprehensive PDF report with all research data"
                 >
                   📥 PDF
                 </button>
