@@ -136,3 +136,90 @@
   font-style: italic;
   margin-top: 0.5rem;
 }
+
+/* Loading indicator */
+.upload-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid #00ff88;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #00ff88;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #00ff88;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error display */
+.upload-error {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff0000;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.upload-error p {
+  color: #ff0000;
+  margin: 0;
+  flex: 1;
+}
+
+.dismiss-btn {
+  background: transparent;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.dismiss-btn:hover {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* Quota info */
+.quota-info {
+  font-size: 12px;
+  color: #888;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.quota-info p {
+  margin: 0;
+}
+
+/* Disabled state */
+.upload-btn:disabled,
+.files-btn:disabled,
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.upload-btn:disabled:hover,
+.files-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}

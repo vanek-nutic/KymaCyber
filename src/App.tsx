@@ -73,12 +73,13 @@ function App() {
     let finalToolCallsCount = 0;
 
     try {
-      // Load files from localStorage
-      const savedFiles = localStorage.getItem('kimi-cyber-files');
-      const filesForAPI = savedFiles ? JSON.parse(savedFiles).map((f: any) => ({
+      // Load files from IndexedDB
+      const { loadFiles } = await import('./lib/file-storage');
+      const loadedFiles = await loadFiles();
+      const filesForAPI = loadedFiles.map((f) => ({
         name: f.name,
         content: f.content
-      })) : [];
+      }));
       
       if (useStreaming) {
         await queryKimiK2Streaming(query, selectedModel, _modelParams, filesForAPI, (update) => {

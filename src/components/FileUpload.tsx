@@ -1,5 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './FileUpload.css';
+import {
+  saveFiles,
+  loadFiles,
+  deleteFile as deleteFileFromDB,
+  checkQuota,
+  formatBytes,
+  migrateFromLocalStorage,
+} from '../lib/file-storage';
 
 export interface UploadedFile {
   id: string;
@@ -18,7 +26,45 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showFiles, setShowFiles] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [quotaInfo, setQuotaInfo] = useState<{ used: number; total: number; percentage: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load files from IndexedDB on mount
+  useEffect(() => {
+    async function init() {
+      try {
+        // Migrate from localStorage if needed
+        await migrateFromLocalStorage();
+
+        // Load files from IndexedDB
+        const loadedFiles = await loadFiles();
+        setFiles(loadedFiles);
+        onFilesChange(loadedFiles);
+
+        // Update quota info
+        await updateQuotaInfo();
+      } catch (error) {
+        console.error('Error loading files:', error);
+        setUploadError('Failed to load saved files');
+      }
+    }
+    init();
+  }, []);
+
+  const updateQuotaInfo = async () => {
+    try {
+      const quota = await checkQuota();
+      setQuotaInfo({
+        used: quota.used,
+        total: quota.total,
+        percentage: quota.percentage,
+      });
+    } catch (error) {
+      console.error('Error checking quota:', error);
+    }
+  };
 
   const handleFileRead = async (file: File): Promise<UploadedFile> => {
     return new Promise((resolve, reject) => {
@@ -40,47 +86,74 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
   };
 
   const handleFiles = async (fileList: FileList) => {
-    const newFiles: UploadedFile[] = [];
-    
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      
-      // Check file type
-      const validTypes = [
-        'text/csv',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain',
-        'application/json',
-      ];
-      
-      if (!validTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx|xls|txt|json)$/i)) {
-        alert(`File type not supported: ${file.name}`);
-        continue;
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      // Check quota first
+      const quota = await checkQuota();
+      let totalNewSize = 0;
+      for (let i = 0; i < fileList.length; i++) {
+        totalNewSize += fileList[i].size;
       }
-      
-      // Check file size (max 100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        alert(`File too large: ${file.name} (max 100MB)`);
-        continue;
+
+      if (totalNewSize > quota.available) {
+        throw new Error(
+          `Not enough storage space. Need ${formatBytes(totalNewSize)}, but only ${formatBytes(quota.available)} available.`
+        );
       }
-      
-      try {
-        const uploadedFile = await handleFileRead(file);
-        newFiles.push(uploadedFile);
-      } catch (error) {
-        console.error('Error reading file:', file.name, error);
-        alert(`Error reading file: ${file.name}`);
+
+      const newFiles: UploadedFile[] = [];
+
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+
+        // Check file type
+        const validTypes = [
+          'text/csv',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'text/plain',
+          'application/json',
+        ];
+
+        if (!validTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx|xls|txt|json)$/i)) {
+          console.warn(`File type not supported: ${file.name}`);
+          continue;
+        }
+
+        // Check file size (max 100MB)
+        if (file.size > 100 * 1024 * 1024) {
+          throw new Error(`File too large: ${file.name} (max 100MB)`);
+        }
+
+        try {
+          const uploadedFile = await handleFileRead(file);
+          newFiles.push(uploadedFile);
+        } catch (error) {
+          console.error('Error reading file:', file.name, error);
+          throw new Error(`Error reading file: ${file.name}`);
+        }
       }
-    }
-    
-    if (newFiles.length > 0) {
-      const updatedFiles = [...files, ...newFiles];
-      setFiles(updatedFiles);
-      onFilesChange(updatedFiles);
-      
-      // Save to localStorage
-      localStorage.setItem('kimi-cyber-files', JSON.stringify(updatedFiles));
+
+      if (newFiles.length > 0) {
+        const updatedFiles = [...files, ...newFiles];
+
+        // Save to IndexedDB
+        await saveFiles(updatedFiles);
+
+        // Update state
+        setFiles(updatedFiles);
+        onFilesChange(updatedFiles);
+
+        // Update quota info
+        await updateQuotaInfo();
+      }
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      setUploadError(error.message || 'Failed to upload files');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -109,38 +182,35 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
     fileInputRef.current?.click();
   };
 
-  const handleDeleteFile = (id: string) => {
-    const updatedFiles = files.filter(f => f.id !== id);
-    setFiles(updatedFiles);
-    onFilesChange(updatedFiles);
-    localStorage.setItem('kimi-cyber-files', JSON.stringify(updatedFiles));
+  const handleDeleteFile = async (id: string) => {
+    try {
+      setUploadError(null);
+
+      // Delete from IndexedDB
+      await deleteFileFromDB(id);
+
+      // Update state
+      const updatedFiles = files.filter((f) => f.id !== id);
+      setFiles(updatedFiles);
+      onFilesChange(updatedFiles);
+
+      // Update quota info
+      await updateQuotaInfo();
+    } catch (error: any) {
+      console.error('Error deleting file:', error);
+      setUploadError(error.message || 'Failed to delete file');
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return formatBytes(bytes);
   };
-
-  // Load files from localStorage on mount
-  React.useEffect(() => {
-    const savedFiles = localStorage.getItem('kimi-cyber-files');
-    if (savedFiles) {
-      try {
-        const parsedFiles = JSON.parse(savedFiles);
-        setFiles(parsedFiles);
-        onFilesChange(parsedFiles);
-      } catch (error) {
-        console.error('Error loading saved files:', error);
-      }
-    }
-  }, []);
 
   return (
     <div className="file-upload-container">
       <div className="file-upload-buttons">
-        <button onClick={handleUploadClick} className="upload-btn">
-          📤 Upload File
+        <button onClick={handleUploadClick} className="upload-btn" disabled={isUploading}>
+          {isUploading ? '⏳ Uploading...' : '📤 Upload File'}
         </button>
         <button onClick={() => setShowFiles(!showFiles)} className="files-btn">
           📁 My Files ({files.length})
@@ -154,7 +224,33 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
         accept=".csv,.xlsx,.xls,.txt,.json"
         onChange={handleFileInputChange}
         style={{ display: 'none' }}
+        disabled={isUploading}
       />
+
+      {isUploading && (
+        <div className="upload-loading">
+          <div className="spinner"></div>
+          <p>Uploading and saving files...</p>
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="upload-error">
+          <p>❌ {uploadError}</p>
+          <button onClick={() => setUploadError(null)} className="dismiss-btn">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {quotaInfo && (
+        <div className="quota-info">
+          <p>
+            Storage: {formatBytes(quotaInfo.used)} / {formatBytes(quotaInfo.total)} used (
+            {quotaInfo.percentage.toFixed(1)}%)
+          </p>
+        </div>
+      )}
 
       {showFiles && (
         <div className="files-panel">
@@ -175,6 +271,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
                     onClick={() => handleDeleteFile(file.id)}
                     className="delete-btn"
                     title="Delete file"
+                    disabled={isUploading}
                   >
                     🗑️
                   </button>
@@ -192,9 +289,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <div className="drop-message">
-            📁 Drop files here to upload
-          </div>
+          <div className="drop-message">📁 Drop files here to upload</div>
         </div>
       )}
 
