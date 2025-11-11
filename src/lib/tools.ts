@@ -165,7 +165,39 @@ export function getAllToolDefinitions(): ToolDefinition[] {
       },
     },
 
-    // 8. Random Choice - Random selection
+    // 8. Memory - Persistent storage and retrieval
+    {
+      type: 'function',
+      function: {
+        name: 'memory',
+        description: 'Memory storage and retrieval system for persistent conversation history and user preferences. Use this to remember important information across sessions, store user preferences, or recall previously saved facts.',
+        parameters: {
+          type: 'object',
+          required: ['action'],
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['store', 'retrieve', 'search'],
+              description: 'Action to perform: store (save information), retrieve (get specific information by key), or search (find relevant memories by query)',
+            },
+            key: {
+              type: 'string',
+              description: 'Key for storage/retrieval (required for store and retrieve actions). Use descriptive keys like "user_name", "preferred_format", etc.',
+            },
+            value: {
+              type: 'string',
+              description: 'Value to store (required for store action). Can be any text information to remember.',
+            },
+            query: {
+              type: 'string',
+              description: 'Search query to find relevant memories (required for search action)',
+            },
+          },
+        },
+      },
+    },
+
+    // 9. Random Choice - Random selection
     {
       type: 'function',
       function: {

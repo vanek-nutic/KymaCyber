@@ -3,6 +3,8 @@
  * Implementation of tool execution logic for all supported tools
  */
 
+import { formulaClient } from './formula-api';
+
 const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY;
 
 /**
@@ -259,6 +261,85 @@ async function executeRandomChoice(args: {
 }
 
 /**
+ * Execute memory tool via Formula API
+ */
+async function executeMemory(args: {
+  action: 'store' | 'retrieve' | 'search';
+  key?: string;
+  value?: string;
+  query?: string;
+}): Promise<string> {
+  try {
+    const { action, key, value, query } = args;
+
+    // Validate arguments
+    if (!action) {
+      return JSON.stringify({
+        error: 'Memory tool requires action parameter (store, retrieve, or search)',
+      });
+    }
+
+    if (action === 'store' && (!key || !value)) {
+      return JSON.stringify({
+        error: 'Memory store requires both key and value parameters',
+      });
+    }
+
+    if (action === 'retrieve' && !key) {
+      return JSON.stringify({
+        error: 'Memory retrieve requires key parameter',
+      });
+    }
+
+    if (action === 'search' && !query) {
+      return JSON.stringify({
+        error: 'Memory search requires query parameter',
+      });
+    }
+
+    // Call Formula API
+    const result = await formulaClient.callTool(
+      'moonshot/memory:latest',
+      'memory',
+      args
+    );
+
+    // Also update local cache for UI
+    if (action === 'store' && key && value) {
+      try {
+        const cached = localStorage.getItem('kimi_memories');
+        const memories = cached ? JSON.parse(cached) : [];
+        
+        // Update or add memory
+        const existingIndex = memories.findIndex((m: any) => m.key === key);
+        const memory = {
+          key,
+          value,
+          timestamp: Date.now(),
+        };
+        
+        if (existingIndex >= 0) {
+          memories[existingIndex] = memory;
+        } else {
+          memories.push(memory);
+        }
+        
+        localStorage.setItem('kimi_memories', JSON.stringify(memories));
+      } catch (cacheError) {
+        console.warn('Failed to update local memory cache:', cacheError);
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Memory tool error:', error);
+    return JSON.stringify({
+      error: error instanceof Error ? error.message : 'Memory operation failed',
+    });
+  }
+}
+
+/**
  * Main tool executor - routes to appropriate handler
  */
 export async function executeTool(
@@ -293,6 +374,9 @@ export async function executeTool(
       case 'random_choice':
         return await executeRandomChoice(args);
       
+      case 'memory':
+        return await executeMemory(args);
+      
       default:
         return JSON.stringify({
           error: `Unknown tool: ${toolName}`,
@@ -305,6 +389,7 @@ export async function executeTool(
             'date',
             'base64',
             'random_choice',
+            'memory',
           ],
         });
     }

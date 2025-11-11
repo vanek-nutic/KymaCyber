@@ -8,6 +8,7 @@ import { FileUpload, type UploadedFile } from './components/FileUpload';
 import { ChatHistory, type ChatHistoryHandle } from './components/ChatHistory';
 import { ModelSelector } from './components/ModelSelector';
 import { ReasoningPanel } from './components/ReasoningPanel';
+import { MemoryPanel } from './components/MemoryPanel';
 import { MarkdownRenderer } from './components/MarkdownRenderer';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { downloadAsMarkdown, downloadAsText, downloadComprehensivePDF, generateFilename, detectGeneratedFiles } from './lib/export-utils';
@@ -38,6 +39,9 @@ function App() {
     inputTokens: 0,
     outputTokens: 0,
   });
+
+  // State for memory panel
+  const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
 
   // Auto-adjust parameters when model changes
   useEffect(() => {
@@ -306,6 +310,13 @@ function App() {
               {useStreaming ? '⚡ Streaming' : '📦 Non-Streaming'}
             </button>
             <ChatHistory ref={chatHistoryRef} onLoadQuery={handleLoadQuery} />
+            <button
+              className="memory-button"
+              onClick={() => setIsMemoryPanelOpen(true)}
+              title="Open Memory Storage"
+            >
+              💾 Memory
+            </button>
           </div>
           
           {/* Model Selection */}
@@ -515,6 +526,12 @@ function App() {
 
       {/* Toast Notifications */}
       <Toaster />
+
+      {/* Memory Panel */}
+      <MemoryPanel
+        isOpen={isMemoryPanelOpen}
+        onClose={() => setIsMemoryPanelOpen(false)}
+      />
     </div>
   );
 }
